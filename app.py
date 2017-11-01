@@ -16,7 +16,7 @@ Scenario:
   -> choosing name affects plot
 
 """
-
+import flask
 import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
