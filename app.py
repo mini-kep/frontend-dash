@@ -63,7 +63,7 @@ def get_from_api_names(freq):
     return [{'label': name, 'value': name} for name in names]
 
 
-def get_datapoints_url(freq, name, format='json'):
+def get_datapoints_url(freq, name, format='csv'):
     url = f'{BASE_URL}/datapoints?'
     params = urllib.parse.urlencode(dict(freq=freq, name=name, format=format))
     return url + params
@@ -137,11 +137,11 @@ def update_graph_parameters(freq, name1, name2):
 
 
 def download_html(freq, name):
+    link_text = f'{freq}_{name}.csv'
+    url = get_datapoints_url(freq, name, 'csv')
     return html.Div(children=[
-        f'Download data for {name} at {freq}: ',
-        html.A('csv', href=get_datapoints_url(freq, name, 'csv')),
-        ' ',
-        html.A('json', href=get_datapoints_url(freq, name, 'json'))
+        # f'Download data for {name} at {freq}: ',
+        html.A(link_text, href=url),
     ])
 
 
