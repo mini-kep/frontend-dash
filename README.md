@@ -1,2 +1,2 @@
 # frontend-dash
-Dash application with interactive controls and time series plotting.
+Experimental controls and visualisation using Plotly/Dash
