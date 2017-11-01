@@ -141,7 +141,7 @@ def download_html(freq, name):
     url = get_datapoints_url(freq, name, 'csv')
     return html.Div(children=[
         # f'Download data for {name} at {freq}: ',
-        html.A(link_text, href=url),
+        html.A(link_text, href=url)
     ])
 
 
@@ -166,7 +166,6 @@ def update_link_parameters(freq, name1, name2):
 # NOT TODO: what tests should be designed for this code?
 #           specifically, how to test for sah components behaviour?
 
-# NOT TODO: can deploy to heroku?
 
 # NOT TODO: in newer versions - split this list to priority and requires something
 # Must split list below to features requiring API change and not.
