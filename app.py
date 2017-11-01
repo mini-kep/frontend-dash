@@ -184,5 +184,6 @@ def update_link_parameters(freq, name1, name2):
 #    app.run_server(debug=True)           
 # Run the Dash app
 if __name__ == '__main__':
-    app.server.run(debug=True, threaded=True)
+    port = os.environ.get('DASH_PORT', 8000)
+    app.server.run(debug=True, threaded=True, port=int(port))
     
