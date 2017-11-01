@@ -70,7 +70,7 @@ def get_datapoints_url(freq, name, format='csv'):
 
 
 def get_from_api_datapoints(freq, name):
-    url = get_datapoints_url(freq, name)
+    url = get_datapoints_url(freq, name, format='json')
     data = requests.get(url).json()
     if not isinstance(data, list):
          # if parameters are invalid, response is not a jsoned list
