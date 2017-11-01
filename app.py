@@ -25,7 +25,12 @@ import requests
 import urllib.parse
 
 
-app = dash.Dash()
+# Setup the app
+# Make sure not to change this file name or the variable names below,
+# the template is configured to execute 'server' on 'app.py'
+server = flask.Flask(__name__)
+server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
+app = dash.Dash(__name__, server=server)
 
 
 # NOT TODO: may be a class Data with 
@@ -172,6 +177,9 @@ def update_graph_parameters(freq, name1, name2):
 #
 
 
+#if __name__ == '__main__':
+#    app.run_server(debug=True)           
+# Run the Dash app
 if __name__ == '__main__':
-    app.run_server(debug=True)           
+    app.server.run(debug=True, threaded=True)
     
