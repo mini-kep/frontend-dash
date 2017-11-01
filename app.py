@@ -16,11 +16,15 @@ Scenario:
   -> choosing name affects plot
 
 """
+import os
+from random import randint
+
 import flask
 import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
+
 import requests
 import urllib.parse
 
@@ -146,7 +150,7 @@ def download_html(freq, name):
                       Input('name1', component_property='value'),
                       Input('name2', component_property='value'),
                       ])
-def update_graph_parameters(freq, name1, name2):
+def update_link_parameters(freq, name1, name2):
     link1 = link2 = None
     if freq and name1:
         link1 = download_html(freq, name1)
