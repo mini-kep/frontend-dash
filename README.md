@@ -1,2 +1,1 @@
-# frontend-dash
-Experimental controls and visualisation using Plotly/Dash
+See deployment at <http://macrodash.herokuapp.com/> 
