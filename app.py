@@ -2,17 +2,17 @@
 
 Scenario:
 
-1. when page is loaded there is one frequency and one indicator selected,
-   one indicator shows on plot 
+1. when page is loaded there is a frequency and two indicators selected,
+   a plot is drawn   
     
 2. select frequency in radio buttons
   -> frequency selection affects list of indicators in drop-down menu 1 and 2
   
 3. select indicator 1 by name in drop-down menu 
-  -> choosing name affects plot
+  -> choosing name affects plot and download footer
 
 4. select indicator 2 by name in drop-down menu 
-  -> choosing name affects plot
+  -> choosing name affects plot and download footer 
 
 """
 import os
@@ -36,6 +36,8 @@ app = dash.Dash(__name__, server=server)
 # FIXME(css formatting): adding css below affects positioning of radio buttons
 # <https://github.com/mini-kep/frontend-dash/issues/4>
 # app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
+# man thing wanted - sans serif font for all page
+
 
 # NOT TODO: may be a class Source with 
 # - Source.names() 
@@ -53,11 +55,23 @@ def frequencies():
     
 BASE_URL = 'http://minikep-db.herokuapp.com/api'
 
+
 def get_from_api_names(freq):
-    """Get dropdown menu labels."""
     url = f'{BASE_URL}/names/{freq}'
-    names = requests.get(url).json()
-    return [{'label': name, 'value': name} for name in names]
+    return requests.get(url).json()
+
+
+def as_menu_items(names):
+    return [{'label': name, 'value': name} for name in names]   
+
+
+# called only once    
+NAMES = {freq: as_menu_items(get_from_api_names(freq))
+         for freq in ['a', 'q', 'm', 'd']}
+    
+def get_names(freq):
+    """Get dropdown menu items."""    
+    return NAMES.get(freq)
 
 
 def get_datapoints_url(freq, name, format):
@@ -73,26 +87,21 @@ def get_from_api_datapoints(freq, name):
          return []
     return data
 
+
 def get_time_series_dict(freq, name):
     data = get_from_api_datapoints(freq, name)
     return dict(x = [d['date'] for d in data],
                 y = [d['value'] for d in data],
                 name = name)   
 
-    
 # app.layout controls HTML layout of dcc components on page
 # there are four dcc components:
-#  - TODO: header 
-#  - TODO: markdown block
+#  - header and markdown block
 #  - radio items 
 #  - 2 dropdown menus
 #  - graph with time series
 #  - links to download data
-
-# NOT TODO: may have additional formatting for html
-# - centering
-# - sans serif font (see css issue above)
-# - header
+#  - enhancements section
 
 app.layout = html.Div([
     # Superceed by level 1 header in markdown
@@ -110,38 +119,62 @@ frequency and variable names.
         id='frequency'
     ),
     dcc.Dropdown(id='name1', value = "GDP_yoy"),
-    dcc.Dropdown(id='name2', value = None),
+    dcc.Dropdown(id='name2', value = "CPI_rog"),
     dcc.Graph(id='time-series-graph'),
     html.Div(id='download-links'), 
     dcc.Markdown('''
 
 # Proposed enhancements
     
-#### Todo 1 (presentation):
+## Todo 1 (presentation):
     
-New: 
- - show latest value for time series
- - show shorthand url in the data footer
- 
-Existing: 
+#### Existing: 
+ - add x axis margin on right and left 
  - download data footer as single line
  - move this block on the right, as table
  - hover day in date for daily data
-    
-#### Todo 2 (requires schema/API/data model change):
- - sections of variables ('GDP Components', 'Prices'...) 
+ - change layout for the frontpage
+
+ #### New: 
+ - show latest value for time series
+ - show shorthand url in the data footer
+   
+#### Not todo:
+ - plot on extra axis 
+ - truncate by start year
+ 
+## Todo 2 (requires schema/API/data model change):
+
+#### Existing: 
+ - fix when shorthand url not working
+ - some info about variables
+ 
+#### New:
+ - sections of variables ('GDP components', 'Prices'...) 
  - human varname description in Russian/English
  - more info about variables as text
+ - new annual, quarterly, monthly backends
  
 #### Todo 3 (data map/data integrity):
  - list all time series URLs for download                 
-
+ - rog/yoy name substitution + integrity check
+ 
 #### Todo 4 (data transformation):
  - diff accumulated time series
-
+ 
 #### Todo 5 (ipython notebook):
- - see case list
+ - make case list
 
+#### Todo 6 seasonal adjustment:
+ - make seasonal adjustment 
+ - add to db schema
+ - add to interfaces
+ - add to graph 
+ 
+#### Todo 7 parser work: 
+ - webhook on repo change for data upload
+ - scheduler
+ 
 # Github
  - [Project home](https://github.com/mini-kep/intro) 
  - [This app code](https://github.com/mini-kep/frontend-dash)
@@ -161,13 +194,13 @@ Existing:
 @app.callback(output=Output('name1', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names1(freq):
-    return get_from_api_names(freq)
+    return get_names(freq)
 
 
 @app.callback(output=Output('name2', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names2(freq):
-    return get_from_api_names(freq)
+    return get_names(freq)
 
 
 @app.callback(output=Output('time-series-graph', 'figure'),
@@ -203,7 +236,7 @@ def update_link_parameters(freq, name1, name2):
         link2 = download_html(freq, name2)
     return [
         # FIXME: what is the formatting needed to put all of elements below in one line?
-        #        is it possible to change html.Div() to something?            
+        #        is it possible to change html.Div() to something? do not change code above            
         html.Div("Download data: "),
         link1,
         html.Div(" "),
@@ -215,5 +248,4 @@ def update_link_parameters(freq, name1, name2):
 
 if __name__ == '__main__':
     port = os.environ.get('DASH_PORT', 8000)
-    app.server.run(debug=True, threaded=True, port=int(port))
-    
+    app.server.run(debug=True, threaded=True, port=int(port))   
