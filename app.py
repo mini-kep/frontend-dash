@@ -33,9 +33,9 @@ server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server)
 
-# FIXME(css formatting): adding css below affects positioning of radio buttons
 # <https://github.com/mini-kep/frontend-dash/issues/4>
-# app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
+app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
+# fix for radio buttons
 # man thing wanted - sans serif font for all page
 
 
