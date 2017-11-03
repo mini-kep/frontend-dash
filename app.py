@@ -100,25 +100,8 @@ app.layout = html.Div([
     dcc.Markdown('''
 # Explore mini-kep dataset
 
-Use controls below to select time series frequencies 
-and variables for charting.
-
-#### Proposed enhancements:
-    
-#### Todo 1:
- - show latest value for time series
- - hover with day in date for daily data
- - download data footer as single line
- - move this block on the right, as table
- - show shorthand url for the data 
-    
-#### Todo 2 (requires schema/API/data model change):
- - sections of variables ('GDP Components', 'Prices'...) 
- - human varname description in Russian/English
- - more info about variables as text
- 
-#### Todo 3:
- - list all URLs
+Use controls below to select time series 
+frequency and variable names.
 
 '''),
    dcc.RadioItems(
@@ -130,8 +113,39 @@ and variables for charting.
     dcc.Dropdown(id='name2', value = None),
     dcc.Graph(id='time-series-graph'),
     html.Div(id='download-links'), 
-    dcc.Markdown('''[Project home](https://github.com/mini-kep/intro) 
-and [this app](https://github.com/mini-kep/frontend-dash) on Github.
+    dcc.Markdown('''
+
+# Proposed enhancements
+    
+#### Todo 1 (presentation):
+    
+New: 
+ - show latest value for time series
+ - show shorthand url in the data footer
+ 
+Existing: 
+ - download data footer as single line
+ - move this block on the right, as table
+ - hover day in date for daily data
+    
+#### Todo 2 (requires schema/API/data model change):
+ - sections of variables ('GDP Components', 'Prices'...) 
+ - human varname description in Russian/English
+ - more info about variables as text
+ 
+#### Todo 3 (data map/data integrity):
+ - list all time series URLs for download                 
+
+#### Todo 4 (data transformation):
+ - diff accumulated time series
+
+#### Todo 5 (ipython notebook):
+ - see case list
+
+# Github
+ - [Project home](https://github.com/mini-kep/intro) 
+ - [This app code](https://github.com/mini-kep/frontend-dash)
+    
 ''') 
     
 ], style={'width': '500', 
