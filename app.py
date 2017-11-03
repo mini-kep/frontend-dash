@@ -182,8 +182,9 @@ frequency and variable names.
  - make page more search-friendly
  
 # Github
- - [Project home](https://github.com/mini-kep/intro) 
- - [This app code](https://github.com/mini-kep/frontend-dash)
+  - [This app code](https://github.com/mini-kep/frontend-dash)
+  - [Project home](https://github.com/mini-kep/intro) 
+  - [Dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)
     
 ''') 
     
