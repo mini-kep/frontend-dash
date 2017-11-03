@@ -7,7 +7,6 @@ Scenario:
     
 2. select frequency in radio buttons
   -> frequency selection affects list of indicators in drop-down menu 1 and 2
-     (same list there)
   
 3. select indicator 1 by name in drop-down menu 
   -> choosing name affects plot
@@ -26,26 +25,23 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 import requests
-import urllib.parse
 
 
-# Setup the app
-# Make sure not to change this file name or the variable names below,
-# the template is configured to execute 'server' on 'app.py'
+# Setup from <https://github.com/plotly/dash-heroku-template>
+# > ...the template is configured to execute 'server' on 'app.py'
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server)
 
+# FIXME(css formatting): adding css below affects positioning of radio buttons
+# <https://github.com/mini-kep/frontend-dash/issues/4>
+# app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
-# NOT TODO: may be a class Data with 
-# - Data.names() 
-# - data.time_series(freq, name) 
-# - frequencies()
+# NOT TODO: may be a class Source with 
+# - Source.names() 
+# - Source.time_series(freq, name) 
+# - Source.frequencies()
 
-# NOT TODO: frequencies can be imported from db API
-#           see for example 
-#           <https://minikep-db.herokuapp.com/api/datapoints?name=ABC&freq=z&format=json>
-#
 def frequencies():
     return [
         {'label': 'Annual', 'value': 'a'},
@@ -58,16 +54,16 @@ def frequencies():
 BASE_URL = 'http://minikep-db.herokuapp.com/api'
 
 def get_from_api_names(freq):
+    """Get dropdown menu labels."""
     url = f'{BASE_URL}/names/{freq}'
     names = requests.get(url).json()
     return [{'label': name, 'value': name} for name in names]
 
 
-def get_datapoints_url(freq, name, format='csv'):
-    url = f'{BASE_URL}/datapoints?'
-    params = urllib.parse.urlencode(dict(freq=freq, name=name, format=format))
-    return url + params
-
+def get_datapoints_url(freq, name, format):
+    return (f'{BASE_URL}/datapoints'
+            f'?freq={freq}&name={name}&format={format}')    
+    
 
 def get_from_api_datapoints(freq, name):
     url = get_datapoints_url(freq, name, format='json')
@@ -83,19 +79,49 @@ def get_time_series_dict(freq, name):
                 y = [d['value'] for d in data],
                 name = name)   
 
-# NOT TODO: may have additional formatting for html
-# - centering
-# - sans serif font
-# - header
     
 # app.layout controls HTML layout of dcc components on page
 # there are four dcc components:
+#  - TODO: header 
+#  - TODO: markdown block
 #  - radio items 
-#  - dropdown menu
+#  - 2 dropdown menus
 #  - graph with time series
 #  - links to download data
+
+# NOT TODO: may have additional formatting for html
+# - centering
+# - sans serif font (see css issue above)
+# - header
+
 app.layout = html.Div([
-    dcc.RadioItems(
+    # Superceed by level 1 header in markdown
+    # html.H1('Explore mini-kep dataset'),     
+    dcc.Markdown('''
+# Explore mini-kep dataset
+
+Use controls below to select time series frequencies 
+and variables for charting.
+
+#### Proposed enhancements:
+    
+#### Todo 1:
+ - show latest value for time series
+ - hover with day in date for daily data
+ - download data footer as single line
+ - move this block on the right, as table
+ - show shorthand url for the data 
+    
+#### Todo 2 (requires schema/API/data model change):
+ - sections of variables ('GDP Components', 'Prices'...) 
+ - human varname description in Russian/English
+ - more info about variables as text
+ 
+#### Todo 3:
+ - list all URLs
+
+'''),
+   dcc.RadioItems(
         options=frequencies(),
         value='q',
         id='frequency'
@@ -103,8 +129,18 @@ app.layout = html.Div([
     dcc.Dropdown(id='name1', value = "GDP_yoy"),
     dcc.Dropdown(id='name2', value = None),
     dcc.Graph(id='time-series-graph'),
-    html.Div(id='download-links')
-], style={'width': '500'})
+    html.Div(id='download-links'), 
+    dcc.Markdown('''[Project home](https://github.com/mini-kep/intro) 
+and [this app](https://github.com/mini-kep/frontend-dash) on Github.
+''') 
+    
+], style={'width': '500', 
+          'marginBottom': 50, 
+          'marginTop': 10,
+          'marginLeft': 50, 
+          'marginRight': 50 
+          }
+)
 
 
  
@@ -135,15 +171,10 @@ def update_graph_parameters(freq, name1, name2):
     return dict(layout=layout_dict, data=data_list) 
 
 
-
 def download_html(freq, name):
     link_text = f'{freq}_{name}.csv'
     url = get_datapoints_url(freq, name, 'csv')
-    return html.Div(children=[
-        # f'Download data for {name} at {freq}: ',
-        html.A(link_text, href=url)
-    ])
-
+    return html.A(link_text, href=url)
 
 @app.callback(output=Output('download-links', 'children'),
               inputs=[Input('frequency', component_property='value'),
@@ -157,32 +188,17 @@ def update_link_parameters(freq, name1, name2):
     if freq and name2:
         link2 = download_html(freq, name2)
     return [
+        # FIXME: what is the formatting needed to put all of elements below in one line?
+        #        is it possible to change html.Div() to something?            
+        html.Div("Download data: "),
         link1,
-        html.Br(),
+        html.Div(" "),
         link2
     ]
-
 
 # NOT TODO: what tests should be designed for this code?
 #           specifically, how to test for sah components behaviour?
 
-
-# NOT TODO: in newer versions - split this list to priority and requires something
-# Must split list below to features requiring API change and not.
-#
-# Components:
-# - sections of variables ('GDP Components', 'Prices'...) 
-# - download this data as.... [done]
-# - human varname description in Russian/English
-# - more info about variables as text
-# - show latest value
-# - link to github <https://github.com/mini-kep/intro>
-#
-
-
-#if __name__ == '__main__':
-#    app.run_server(debug=True)           
-# Run the Dash app
 if __name__ == '__main__':
     port = os.environ.get('DASH_PORT', 8000)
     app.server.run(debug=True, threaded=True, port=int(port))
