@@ -134,6 +134,7 @@ frequency and variable names.
  - move this block on the right, as table
  - hover day in date for daily data
  - change layout for the frontpage
+ - page information in header 
 
  #### New: 
  - show latest value for time series
@@ -177,8 +178,8 @@ frequency and variable names.
 
 #### Todo 8 social: 
  - permanent addresses for the graph
- - socail links footer 
-
+ - social links footer 
+ - make page more search-friendly
  
 # Github
  - [Project home](https://github.com/mini-kep/intro) 
