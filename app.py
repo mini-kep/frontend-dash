@@ -174,6 +174,11 @@ frequency and variable names.
 #### Todo 7 parser work: 
  - webhook on repo change for data upload
  - scheduler
+
+#### Todo 8 social: 
+ - permanent addresses for the graph
+ - socail links footer 
+
  
 # Github
  - [Project home](https://github.com/mini-kep/intro) 
