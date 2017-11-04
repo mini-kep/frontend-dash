@@ -9,19 +9,16 @@ Deployed at: <http://macrodash.herokuapp.com/>
 ![](https://user-images.githubusercontent.com/9265326/32327157-89eb18f6-bfe6-11e7-89da-2306c9591647.png)
 
 # Done
-- download data footer as single line
-
+- [x] download data footer as single line
+- [x] page information in header 
+ 
 # Proposed enhancements
     
 ## Todo 1 (presentation):
     
-#### Existing: 
- - add x axis margin on right and left 
- - page information in header 
-
-#### New: 
- - show latest value for time series
- - show shorthand url in the data footer
+- [ ] add x axis margin on right and left 
+- [ ] show latest value for time series
+- [ ] show shorthand url in the data footer
 
 #### Not todo:
  - plot on extra axis 
@@ -64,6 +61,10 @@ Deployed at: <http://macrodash.herokuapp.com/>
  - permanent addresses for the graph
  - social links footer 
  - make page more search-friendly
+ 
+#### Todo 9 completeness:
+ - monthly data map
+
  
 # Github
   - [This app code](https://github.com/mini-kep/frontend-dash)
