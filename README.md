@@ -3,12 +3,12 @@
 <table>
 <tr>
  <td>
-     ![image](https://user-images.githubusercontent.com/9265326/32409472-5543875e-c1bd-11e7-8573-df77492858f8.png)
+     <img src="https://user-images.githubusercontent.com/9265326/32409472-5543875e-c1bd-11e7-8573-df77492858f8.png">
  </td> 
  <td>
-     Run locally: `python app.py`
-
-     Deployed at: <http://macrodash.herokuapp.com/> 
+  Run locally: `python app.py`
+  <br> 
+  Deployed at: <http://macrodash.herokuapp.com/> 
 </td> 
 </tr>
 </table>
