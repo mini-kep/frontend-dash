@@ -28,18 +28,12 @@ import requests
 
 
 # Setup from <https://github.com/plotly/dash-heroku-template>
-# > ...the template is configured to execute 'server' on 'app.py'
+# ...the template is configured to execute 'server' on 'app.py'
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server)
-app.title = 'mini-kep browser'
-
-
-
-# <https://github.com/mini-kep/frontend-dash/issues/4>
 app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
-# fix for radio buttons
-# man thing wanted - sans serif font for all page
+app.title = 'mini-kep browser'
 
 
 # NOT TODO: may be a class Source with 
@@ -99,6 +93,7 @@ def get_time_series_dict(freq, name):
 
 # app.layout controls HTML layout of dcc components on page
 
+
 # footer        
 right = dcc.Markdown('''
 #### Github links
@@ -139,16 +134,11 @@ Use controls below to select time series frequency and variable names.
 
 
 app.layout = html.Table([
-
     html.Tr([
             html.Td(left),
             html.Td(right)
             ])        
-        
 ])
-
-
-
 
 
 @app.callback(output=Output('name1', component_property='options'), 
@@ -201,4 +191,4 @@ def update_link_parameters(freq, name1, name2):
 
 if __name__ == '__main__':
     port = os.environ.get('DASH_PORT', 8000)
-    app.server.run(debug=True, threaded=True, port=int(port))   
+    app.server.run(debug=True, threaded=True, port=int(port))
