@@ -1,6 +1,6 @@
 # Plotly/Dash charts for mini-kep dataset 
 
-<table>
+<table  border=0>
 <tr>
  <td>
      <img src="https://user-images.githubusercontent.com/9265326/32409472-5543875e-c1bd-11e7-8573-df77492858f8.png">
@@ -8,7 +8,7 @@
  <td>
   Run locally: `python app.py`
   <br> 
-  Deployed at: <http://macrodash.herokuapp.com/> 
+  Deployed at: <a href="http://macrodash.herokuapp.com">http://macrodash.herokuapp.com</a> 
 </td> 
 </tr>
 </table>
