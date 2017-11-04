@@ -32,6 +32,9 @@ import requests
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server)
+app.title = 'mini-kep browser'
+
+
 
 # <https://github.com/mini-kep/frontend-dash/issues/4>
 app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
@@ -95,23 +98,27 @@ def get_time_series_dict(freq, name):
                 name = name)   
 
 # app.layout controls HTML layout of dcc components on page
-# there are four dcc components:
+
+# footer        
+right = dcc.Markdown('''
+#### Github links
+  - [This app code](https://github.com/mini-kep/frontend-dash)
+  - [Proposed enhancements](https://github.com/mini-kep/frontend-dash/blob/master/README.md#proposed-enhancements) 
+  - [Project home](https://github.com/mini-kep/intro) 
+  - [Dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)    
+''')
+
+# dcc components:
 #  - header and markdown block
 #  - radio items 
 #  - 2 dropdown menus
 #  - graph with time series
 #  - links to download data
-#  - enhancements section
-
-app.layout = html.Div([
-    # Superceed by level 1 header in markdown
-    # html.H1('Explore mini-kep dataset'),     
+left = html.Div([
     dcc.Markdown('''
 # Explore mini-kep dataset
 
-Use controls below to select time series 
-frequency and variable names.
-
+Use controls below to select time series frequency and variable names.
 '''),
    dcc.RadioItems(
         options=frequencies(),
@@ -121,73 +128,7 @@ frequency and variable names.
     dcc.Dropdown(id='name1', value = "GDP_yoy"),
     dcc.Dropdown(id='name2', value = "CPI_rog"),
     dcc.Graph(id='time-series-graph'),
-    html.Div(id='download-links'), 
-    dcc.Markdown('''
-
-# Proposed enhancements
-    
-## Todo 1 (presentation):
-    
-#### Existing: 
- - add x axis margin on right and left 
- - download data footer as single line
- - move this block on the right, as table
- - hover day in date for daily data
- - change layout for the frontpage
- - page information in header 
-
- #### New: 
- - show latest value for time series
- - show shorthand url in the data footer
-   
-#### Not todo:
- - plot on extra axis 
- - truncate by start year
- 
-## Todo 2 (requires schema/API/data model change):
-
-#### Existing: 
- - fix when shorthand url not working
- - some info about variables
- 
-#### New:
- - sections of variables ('GDP components', 'Prices'...) 
- - human varname description in Russian/English
- - more info about variables as text
- - new annual, quarterly, monthly backends
- 
-#### Todo 3 (data map/data integrity):
- - list all time series URLs for download                 
- - rog/yoy name substitution + integrity check
- 
-#### Todo 4 (data transformation):
- - diff accumulated time series
- 
-#### Todo 5 (ipython notebook):
- - make case list
-
-#### Todo 6 seasonal adjustment:
- - make seasonal adjustment 
- - add to db schema
- - add to interfaces
- - add to graph 
- 
-#### Todo 7 parser work: 
- - webhook on repo change for data upload
- - scheduler
-
-#### Todo 8 social: 
- - permanent addresses for the graph
- - social links footer 
- - make page more search-friendly
- 
-# Github
-  - [This app code](https://github.com/mini-kep/frontend-dash)
-  - [Project home](https://github.com/mini-kep/intro) 
-  - [Dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)
-    
-''') 
-    
+    html.Div(id='download-links') 
 ], style={'width': '500', 
           'marginBottom': 50, 
           'marginTop': 10,
@@ -197,7 +138,19 @@ frequency and variable names.
 )
 
 
- 
+app.layout = html.Table([
+
+    html.Tr([
+            html.Td(left),
+            html.Td(right)
+            ])        
+        
+])
+
+
+
+
+
 @app.callback(output=Output('name1', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names1(freq):
@@ -241,14 +194,7 @@ def update_link_parameters(freq, name1, name2):
         link1 = download_html(freq, name1)
     if freq and name2:
         link2 = download_html(freq, name2)
-    return [
-        # FIXME: what is the formatting needed to put all of elements below in one line?
-        #        is it possible to change html.Div() to something? do not change code above            
-        "Download data: ",
-        link1,
-        " ",
-        link2
-    ]
+    return ["Download data: ", link1, " ",  link2 ]
 
 # NOT TODO: what tests should be designed for this code?
 #           specifically, how to test for sah components behaviour?
