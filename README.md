@@ -1,25 +1,9 @@
 # Plotly/Dash charts for mini-kep dataset 
 
-<table  border=0>
-<tr>
- <td>
-     <img src="https://user-images.githubusercontent.com/9265326/32409472-5543875e-c1bd-11e7-8573-df77492858f8.png">
- </td> 
- <td>
-  Run locally: `python app.py`
-  <br> 
-  Deployed at: <a href="http://macrodash.herokuapp.com">http://macrodash.herokuapp.com</a> 
-</td> 
-</tr>
-</table>
+Run locally: `python app.py`
 
-## Screenshot
+Deployed at: <http://macrodash.herokuapp.com> 
 
-
-# Done
-- [x] download data footer as single line
-- [x] page information in header 
- 
 # Proposed enhancements
     
 ## Todo 1 (presentation):
@@ -73,8 +57,8 @@
 #### Todo 9 completeness:
  - monthly data map
 
+
+# Done
+- [x] download data footer as single line
+- [x] page information in header 
  
-# Github
-  - [This app code](https://github.com/mini-kep/frontend-dash)
-  - [Project home](https://github.com/mini-kep/intro) 
-  - [Dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)
