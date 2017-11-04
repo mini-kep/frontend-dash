@@ -244,9 +244,9 @@ def update_link_parameters(freq, name1, name2):
     return [
         # FIXME: what is the formatting needed to put all of elements below in one line?
         #        is it possible to change html.Div() to something? do not change code above            
-        html.Div("Download data: "),
+        "Download data: ",
         link1,
-        html.Div(" "),
+        " ",
         link2
     ]
 
