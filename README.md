@@ -8,25 +8,25 @@ Deployed at: <http://macrodash.herokuapp.com/>
 
 ![](https://user-images.githubusercontent.com/9265326/32327157-89eb18f6-bfe6-11e7-89da-2306c9591647.png)
 
+# Done
+- download data footer as single line
+
 # Proposed enhancements
     
 ## Todo 1 (presentation):
     
 #### Existing: 
  - add x axis margin on right and left 
- - download data footer as single line
- - move this block on the right, as table
- - hover day in date for daily data
- - change layout for the frontpage
  - page information in header 
 
- #### New: 
+#### New: 
  - show latest value for time series
  - show shorthand url in the data footer
-   
+
 #### Not todo:
  - plot on extra axis 
  - truncate by start year
+ - hover day in date for daily data
  
 ## Todo 2 (requires schema/API/data model change):
 
