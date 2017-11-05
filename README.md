@@ -6,59 +6,53 @@ Deployed at: <http://macrodash.herokuapp.com>
 
 # Proposed enhancements
     
-## Todo 1 (presentation):
-    
-- [ ] add x axis margin on right and left 
-- [ ] show latest value for time series
-- [ ] show shorthand url in the data footer
-
-#### Not todo:
- - plot on extra axis 
- - truncate by start year
- - hover day in date for daily data
+## Todo 1: Presentation
  
-## Todo 2 (requires schema/API/data model change):
-
-#### Existing: 
- - fix when shorthand url not working
- - some info about variables
+#### Current 
+- [ ] show latest value for time series (WIP)
+- [ ] plot on extra axis (NOT TODO)
+- [ ] hover day in date for daily data (NOT TODO)
  
-#### New:
- - sections of variables ('GDP components', 'Prices'...) 
- - human varname description in Russian/English
- - more info about variables as text
+#### Shorthand 
+ - [ ] show shorthand url in  data footer
+ - [ ] fix when shorthand url not working
+ 
+## Todo 2: API change 
+
+#### Whole dataframes
  - new annual, quarterly, monthly backends
- 
-#### Todo 3 (data map/data integrity):
+
+#### Variable descriptions
+ - some info about variables as text
+ - human varname description in Russian/English
+  
+## Todo 3: data map/data integrity
+
+#### Data integrity
  - list all time series URLs for download                 
  - rog/yoy name substitution + integrity check
  
-#### Todo 4 (data transformation):
+#### Data transformation:
  - diff accumulated time series
  
-#### Todo 5 (ipython notebook):
+## Todo 4: ipython notebook
  - make case list
+ - make notebooks
 
-#### Todo 6 seasonal adjustment:
+## Todo 5: seasonal adjustment
  - make seasonal adjustment 
  - add to db schema
  - add to interfaces
  - add to graph 
  
-#### Todo 7 parser work: 
+## Todo 6: parsers 
  - webhook on repo change for data upload
  - scheduler
 
-#### Todo 8 social: 
+## Todo 7 social: 
  - permanent addresses for the graph
  - social links footer 
  - make page more search-friendly
  
-#### Todo 9 completeness:
+## Todo 8 completeness:
  - monthly data map
-
-
-# Done
-- [x] download data footer as single line
-- [x] page information in header 
- 
