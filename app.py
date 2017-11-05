@@ -108,7 +108,9 @@ class DataSeries:
                     y = [d['value'] for d in data],
                     name = self.name)   
 
-print(DataSeries('a', 'GDP_yoy').get_dict(2000,2001))
+# move to tests
+assert DataSeries('a', 'GDP_yoy').get_dict(2000,2001) == \
+    {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
 
 VARIABLE_NAMES = {freq: VariableNames(freq).as_menu_items()
                   for freq in ['a', 'q', 'm', 'd']}
@@ -217,7 +219,7 @@ def update_graph_parameters(freq, name1, name2, years):
         ts2 = DataSeries(freq, name2).get_dict(*years)
         data_list.append(ts2)
     # updating x axis based on slider years selection
-    start = years[0]-1
+    start = years[0]-2
     end = years[1]+2
     if freq == 'a':
        layout_dict['xaxis']=dict(range=["{start}", "{end}"])
