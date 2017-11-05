@@ -132,7 +132,7 @@ class DataSeries:
                     y = [d['value'] for d in self.data],
                     name = self.name)   
 
-# move to tests
+# TODO:  move to tests
 assert DataSeries('a', 'GDP_yoy').filter(2000,2001).dict == \
     {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
 
@@ -167,7 +167,8 @@ FOOTER = '''
   - [This app code](https://github.com/mini-kep/frontend-dash)
   - [Proposed enhancements](https://github.com/mini-kep/frontend-dash/blob/master/README.md#proposed-enhancements) 
   - [Project home](https://github.com/mini-kep/intro) and
-    [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)    
+    [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md) 
+  - [Trello issues board](https://trello.com/b/ioHBMwH7/minikep)  
 '''
 
 START_VALUES = dict(freq='q', name1='GDP_yoy', name2='CPI_rog')
@@ -193,39 +194,55 @@ left_window = html.Div([
                 value=[MIN_YEAR, MAX_YEAR]
                 )
         ], style={'marginBottom': '50'}),
-    html.Div(id='download-links', style={'marginBottom': '25'}), 
+    html.Div(id='download-links'), 
 ], style={'width': '500', 
           'marginTop': 10,
           'marginLeft': 50,
-          }
+          'marginRight': 100}
 )
     
 # FIXME: must align to top    
 right_window = html.Div([
+    html.Div(["Varibale information"], style={'fontWeight':'bold'}),    
+    html.Div(id='var1-info'),
+    html.Div(id='var2-info'),
     dcc.Markdown("""
+    
+### Comments
 
-**Frontend/dash TODO:**
- - [ ] show latest value for time series (WIP)
- - [ ] show shorthand url in data footer + fix when shorthand url not working
- 
-**NOT TODO:** 
- - plot on extra axis (NOT TODO)
- - hover day in date for daily data (NOT TODO)
 
 """),
     dcc.Markdown(FOOTER)
     ])  
     
 app.layout = html.Table([
-
     html.Tr([
             html.Td(left_window),
             html.Td(right_window)
-            ])        
-        
+            ])                
 ])
     
+    
+def varinfo(freq, name):
+    return [freq, " ", name]
+    
+#start placeholders for variable information    
+@app.callback(output=Output('var1-info', 'children'),
+              inputs=[Input('frequency', component_property='value'),
+                      Input('name1', component_property='value')
+                      ])
+def update_varinfo1(freq, name):
+    return varinfo(freq, name)
 
+
+@app.callback(output=Output('var2-info', 'children'),
+              inputs=[Input('frequency', component_property='value'),
+                      Input('name2', component_property='value')
+                      ])
+def update_varinfo2(freq, name):
+    return varinfo(freq, name)    
+#end placeholders for variable information
+    
 
 @app.callback(output=Output('name1', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
