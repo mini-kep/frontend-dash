@@ -14,9 +14,8 @@ Scenario:
 4. select indicator 2 by name in drop-down menu 
   -> choosing name affects plot and download footer 
 
-Additional functionality:
     
-5. Slider controls date source range and axis range. When changing 
+5. Slider controls source date range and axis range. When changing 
    source the Y axis changes as well.    
 
 """
@@ -63,61 +62,21 @@ app.title = 'mini-kep browser'
 
 BASE_URL = 'http://minikep-db.herokuapp.com/api'
 
-class VariableNames:
+def get_names_from_api(freq):
+    return requests.get(f'{BASE_URL}/names/{freq}').json()
+
+
+class Names:
+    """Varibale names by frequency."""
+
+    NAMES = {freq: get_names_from_api(freq) for freq in 'aqmd'}
+
     def __init__(self, freq):
-        self.url = f'{BASE_URL}/names/{freq}'
-        
-    def get_from_api(self):
-        return requests.get(self.url).json()
-    
-    def as_menu_items(self):
-        names = self.get_from_api()
-        return [{'label': name, 'value': name} for name in names]   
-
-class DataSeries:
-    def __init__(self, freq, name):
-        self.url = self.make_url(freq, name, 'json')
         self.freq = freq
-        self.name = name
-        
-    @staticmethod
-    def make_url(freq, name, format):
-        return (f'{BASE_URL}/datapoints'
-                f'?freq={freq}&name={name}&format={format}')    
     
-    def get_from_api(self):
-        data = requests.get(self.url).json()
-        if not isinstance(data, list):
-             # if parameters are invalid, response is not a jsoned list
-             return []
-        return data
-
-    @staticmethod
-    def get_year(datapoint):
-        return datetime.strptime(datapoint['date'], "%Y-%m-%d").year
-
-    def get_dict(self, start, end):
-        def is_in_range(datapoint):
-            year = self.get_year(datapoint)
-            return year>=start and year<=end
-        data = [d for d in self.get_from_api() if is_in_range(d)]
-        if self.freq=='a':
-            for d in data:
-                d['date'] = self.get_year(d)
-        return dict(x = [d['date'] for d in data],
-                    y = [d['value'] for d in data],
-                    name = self.name)   
-
-# move to tests
-assert DataSeries('a', 'GDP_yoy').get_dict(2000,2001) == \
-    {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
-
-VARIABLE_NAMES = {freq: VariableNames(freq).as_menu_items()
-                  for freq in ['a', 'q', 'm', 'd']}
-
-def get_names(freq):
-    """Get dropdown menu items."""    
-    return VARIABLE_NAMES.get(freq)
+    @property
+    def menu_items(self):
+        return [{'label': name, 'value': name} for name in self.NAMES.get(self.freq)]   
 
 
 def frequencies():
@@ -127,15 +86,66 @@ def frequencies():
         {'label': 'Monthly', 'value': 'm'},        
         {'label': 'Daily', 'value': 'd'}
     ]
+
+
+class DataSeries:
+    def __init__(self, freq, name):
+        self.freq = freq
+        self.name = name
+        self.data = self.get_from_api()
+        
+    @staticmethod
+    def make_url(freq, name, format):
+        return (f'{BASE_URL}/datapoints'
+                f'?freq={freq}&name={name}&format={format}')    
     
+    def get_from_api(self):
+        url = self.make_url(self.freq, self.name, 'json')
+        data = requests.get(url).json()
+        # if parameters are invalid, response is not a jsoned list
+        if not isinstance(data, list):
+             return []
+        return data
+
+    @staticmethod
+    def get_year(datapoint):
+        return datetime.strptime(datapoint['date'], "%Y-%m-%d").year
+
+    def filter(self, start, end):
+        def is_in_range(datapoint):
+            year = self.get_year(datapoint)
+            return year>=start and year<=end
+        self.data = [d for d in self.data if is_in_range(d)]
+        return self
     
+    def convert_annual_dates_to_int(self):
+        """In annual time series plot 1999-12-31 will be plotted around 2000,
+           which is misleading, must shift x value to 1999."""
+        if self.freq=='a':
+            for d in self.data:
+                d['date'] = self.get_year(d)        
+    
+    @property
+    def dict(self):
+        self.convert_annual_dates_to_int()
+        return dict(x = [d['date'] for d in self.data],
+                    y = [d['value'] for d in self.data],
+                    name = self.name)   
+
+# move to tests
+assert DataSeries('a', 'GDP_yoy').filter(2000,2001).dict == \
+    {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
+
+
 MIN_YEAR=1999    
-MAX_YEAR=2018
+# TODO: change MAX_YEAR when 2018 data arrives
+MAX_YEAR=2017
 
-MARKS = {i: "" for i in range(MIN_YEAR, MAX_YEAR)}
-for year in [MIN_YEAR, 2005, 2010, 2015, MAX_YEAR]:
-    MARKS[year] = str(year)   
-
+def marks(min_year=MIN_YEAR, max_year=MAX_YEAR):
+    marks = {i: "" for i in range(min_year, max_year)}
+    for year in [min_year, 2005, 2010, 2015, max_year]:
+        marks[year] = str(year)
+    return marks   
 
 # app.layout controls HTML layout of dcc components on page:
 #  - header and footer markdown blocks
@@ -160,10 +170,10 @@ FOOTER = '''
     [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)    
 '''
 
-
 START_VALUES = dict(freq='q', name1='GDP_yoy', name2='CPI_rog')
 
-app.layout = html.Div([
+
+left_window = html.Div([
    dcc.Markdown(HEADER),
    dcc.RadioItems(
         id='frequency',
@@ -177,32 +187,69 @@ app.layout = html.Div([
             dcc.RangeSlider(
                 id='view-years',    
                 count=1,
-                min=MIN_YEAR, max=MAX_YEAR,
                 step=1,
-                marks=MARKS,
+                min=MIN_YEAR, max=MAX_YEAR,
+                marks=marks(),
                 value=[MIN_YEAR, MAX_YEAR]
                 )
         ], style={'marginBottom': '50'}),
     html.Div(id='download-links', style={'marginBottom': '25'}), 
-    dcc.Markdown(FOOTER),
 ], style={'width': '500', 
           'marginTop': 10,
           'marginLeft': 50,
           }
 )
+    
+# FIXME: must align to top    
+right_window = html.Div([
+    dcc.Markdown("""
+
+**Frontend/dash TODO:**
+ - [ ] show latest value for time series (WIP)
+ - [ ] show shorthand url in data footer + fix when shorthand url not working
+ 
+**NOT TODO:** 
+ - plot on extra axis (NOT TODO)
+ - hover day in date for daily data (NOT TODO)
+
+"""),
+    dcc.Markdown(FOOTER)
+    ])  
+    
+app.layout = html.Table([
+
+    html.Tr([
+            html.Td(left_window),
+            html.Td(right_window)
+            ])        
+        
+])
+    
 
 
 @app.callback(output=Output('name1', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names1(freq):
-    return get_names(freq)
+    return Names(freq).menu_items
 
 
 @app.callback(output=Output('name2', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names2(freq):
-    return get_names(freq)
+    return Names(freq).menu_items
 
+
+def xrange(freq, years):
+    """Updating x axis based on years selection in renage slider."""
+    if freq == 'a':
+       start = years[0] - 2
+       end = years[1] + 2    
+       return dict(range=["{start}", "{end}"])
+    else:
+       start = years[0] - 2
+       end = years[1] + 1    
+       return dict(range=[f"{start}-12-31", f"{end}-12-31"])
+    
 
 @app.callback(output=Output('time-series-graph', 'figure'),
               inputs=[Input('frequency', component_property='value'), 
@@ -214,21 +261,15 @@ def update_graph_parameters(freq, name1, name2, years):
     layout_dict = dict(margin = {'l': 40, 'r': 0, 't': 20, 'b': 30},
                        legend = dict(orientation="h"),
                        showlegend = True)   
-    data_list = [DataSeries(freq, name1).get_dict(*years)]
+    data_list = [DataSeries(freq, name1).filter(*years).dict]
     if name2:
-        ts2 = DataSeries(freq, name2).get_dict(*years)
+        ts2 = DataSeries(freq, name2).filter(*years).dict
         data_list.append(ts2)
-    # updating x axis based on slider years selection
-    start = years[0]-2
-    end = years[1]+2
-    if freq == 'a':
-       layout_dict['xaxis']=dict(range=["{start}", "{end}"])
-    else:
-       # FIXME: does not seems to work with q-m frequencies         
-       layout_dict['xaxis']=dict(range=[f"{start}-12-31", f"{end}-12-31"])
+    layout_dict['xaxis']=xrange(freq, years)
     return dict(layout=layout_dict, data=data_list) 
+    
 
-# TODO: annotations
+# FIXME: annotations
 # <https://community.plot.ly/t/annotation-not-showing-on-dash-dcc-graph/6660>
 
 
@@ -249,7 +290,7 @@ def update_link_parameters(freq, name1, name2):
         link1 = download_html(freq, name1)
     if freq and name2:
         link2 = download_html(freq, name2)
-    return ["Download data: ", link1, " ",  link2 ]
+    return ["Download data: ", link1, " ",  link2]
 
 
 if __name__ == '__main__':
