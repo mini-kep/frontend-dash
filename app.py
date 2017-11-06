@@ -56,8 +56,13 @@ app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
 app.title = 'mini-kep browser'
 
 
+
 def fetch(url):
-    data = requests.get(url).json()
+    return requests.get(url).json()
+
+
+def get_list(url):
+    data = fetch(url)
     # if parameters are invalid, response is not a list
     if not isinstance(data, list):
         return []
@@ -71,6 +76,10 @@ class URL:
     def __init__(self, freq, name=None):
         self.freq = freq
         self.name = name
+
+    def info(self):
+        return (f'{self.BASE_URL}/api/info'
+                f'?freq={self.freq}&name={self.name}')
 
     def names(self):
         return f'{self.BASE_URL}/api/names/{self.freq}'
@@ -96,21 +105,26 @@ class RemoteAPI:
     def __init__(self, freq, name=None):
         self.freq = freq
         self.name = name
+        
+    @property
+    def info(self):
+        url = URL(self.freq, self.name).info()
+        return fetch(url)
 
     @property
     def names(self):
         url = URL(self.freq).names()
-        return fetch(url)
+        return get_list(url)
 
     @property
     def json(self):
         url = URL(self.freq, self.name).datapoints('json')
-        return fetch(url)
+        return get_list(url)
 
     @property
     def csv(self):
         url = URL(self.freq, self.name).datapoints('csv')
-        return fetch(url)
+        return get_list(url)
 
 
 NAMES = {freq: RemoteAPI(freq).names for freq in 'aqmd'}
@@ -251,9 +265,11 @@ def custom_url_link(freq, name):
 
 
 def varinfo(freq, name):
+    info = RemoteAPI(freq, name).info
+    start, end = (info[key] for key in ('start_date', 'end_date'))
     return [f'Frequency: {freq}, variable name: {name}, ',
-             'custom URL: ',
-              custom_url_link(freq, name)]
+            f'start: {start}, end: {end}, ', 
+             'custom URL: ', custom_url_link(freq, name)]
 
 
 # start placeholders for variable information
