@@ -95,9 +95,7 @@ class URL:
     def csv(self):
         return self.datapoints('csv')
 
-# TODO: move to tests
-assert URL("d", "BRENT").custom_link == \
-    'http://minikep-db.herokuapp.com/all/series/BRENT/d'
+
     
 class RemoteAPI:
     def __init__(self, freq, name=None):
@@ -256,7 +254,7 @@ app.layout = html.Table([
 
 def custom_url_link(freq, name):
     url = URL(freq, name)
-    return html.A(url.custom_link, href=url.custom_link)
+    return html.A(url.custom_text, href=url.custom_link)
 
     
 def varinfo(freq, name):
