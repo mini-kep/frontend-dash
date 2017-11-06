@@ -30,10 +30,6 @@ NOT IMPLMENTED:
 
 3. Annotation for the last observation value.
 
-4. Names description of the variables - must have some text field.
-
-5. Footer formatting.
-
 """
 
 from datetime import datetime  
@@ -230,24 +226,18 @@ left_window = html.Div([
           'marginRight': 100}
 )
     
-# FIXME: must align to top    
 right_window = html.Div([
-    html.Div(["Variable information"], style={'fontWeight':'bold'}),    
+    html.Div(["Variable information"], style={'fontWeight':'bold', 
+                                              'marginTop': 100}),    
     html.Div(id='var1-info'),
     html.Div(id='var2-info'),
-    dcc.Markdown("""
-    
-### Comments
-
-
-"""),
     dcc.Markdown(FOOTER)
     ])  
     
 app.layout = html.Table([
     html.Tr([
-            html.Td(left_window),
-            html.Td(right_window)
+            html.Td(left_window, style={'verticalAlign':'top'}),
+            html.Td(right_window, style={'verticalAlign':'top'})
             ])                
 ])
     
