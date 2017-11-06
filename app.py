@@ -96,7 +96,7 @@ class URL:
         return self.datapoints('csv')
 
 # TODO: move to tests
-assert URL("d", "BRENT").custom == \
+assert URL("d", "BRENT").custom_link == \
     'http://minikep-db.herokuapp.com/all/series/BRENT/d'
     
 class RemoteAPI:
