@@ -70,19 +70,34 @@ def fetch(url):
 
 class URL:    
     
-    BASE_URL = 'http://minikep-db.herokuapp.com/api'
+    BASE_URL = 'http://minikep-db.herokuapp.com'
     
     def __init__ (self, freq, name=None):
         self.freq = freq
         self.name = name
     
     def names(self):   
-        return f'{self.BASE_URL}/names/{self.freq}'
+        return f'{self.BASE_URL}/api/names/{self.freq}'
     
     def datapoints(self, format):
-        return (f'{self.BASE_URL}/datapoints'
+        return (f'{self.BASE_URL}/api/datapoints'
                 f'?freq={self.freq}&name={self.name}&format={format}')    
-        
+
+    @property
+    def text(self):
+        return f'series/{self.name}/{self.freq}'   
+
+    @property
+    def custom(self):
+        return f'{self.BASE_URL}/all/series/{self.name}/{self.freq}'    
+    
+    @property
+    def csv(self):
+        return self.datapoints('csv')
+
+# TODO: move to tests
+assert URL("d", "BRENT").custom == \
+    'http://minikep-db.herokuapp.com/all/series/BRENT/d'
     
 class RemoteAPI:
     def __init__(self, freq, name=None):
@@ -182,7 +197,6 @@ FOOTER = '''
 **Github links**:
     
   - [This app code](https://github.com/mini-kep/frontend-dash)
-  - [Proposed enhancements](https://github.com/mini-kep/frontend-dash/blob/master/README.md#proposed-enhancements) 
   - [Project home](https://github.com/mini-kep/intro) and
     [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md) 
   - [Trello issues board](https://trello.com/b/ioHBMwH7/minikep)  
@@ -220,7 +234,7 @@ left_window = html.Div([
     
 # FIXME: must align to top    
 right_window = html.Div([
-    html.Div(["Varibale information"], style={'fontWeight':'bold'}),    
+    html.Div(["Variable information"], style={'fontWeight':'bold'}),    
     html.Div(id='var1-info'),
     html.Div(id='var2-info'),
     dcc.Markdown("""
@@ -239,9 +253,16 @@ app.layout = html.Table([
             ])                
 ])
     
+
+def custom_url_link(freq, name):
+    url = URL("d", "BRENT") 
+    return html.A(url.text, href=url.custom)
+
     
 def varinfo(freq, name):
-    return [freq, " ", name]
+    return [f'Frequency: {freq}, variable name: {name}',
+            html.Br(),
+            custom_url_link(freq, name)]
     
 #start placeholders for variable information    
 @app.callback(output=Output('var1-info', 'children'),
@@ -266,10 +287,12 @@ def update_varinfo2(freq, name):
 def update_names1(freq):
     return WidgetItems.names(freq)
 
+
 @app.callback(output=Output('name2', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names2(freq):
     return WidgetItems.names(freq)
+
 
 def xrange(freq, years):
     """Updating x axis based on years selection in renage slider."""
@@ -307,7 +330,7 @@ def update_graph_parameters(freq, name1, name2, years):
 
 def download_html(freq, name):
     link_text = f'{freq}_{name}.csv'
-    url = DataSeries.make_url(freq, name, 'csv')
+    url = URL(freq, name).datapoints('csv')
     return html.A(link_text, href=url)
 
 
