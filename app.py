@@ -110,12 +110,12 @@ NAMES = {freq: RemoteAPI(freq).names for freq in 'aqmd'}
 class WidgetItems:
 
     @classmethod
-    def names(freq):
+    def names(cls, freq):
         """Varibale names by frequency."""
         return [{'label': name, 'value': name} for name in NAMES.get(freq)]           
     
     @classmethod
-    def frequencies():
+    def frequencies(cls):
         return [
             {'label': 'Annual', 'value': 'a'},
             {'label': 'Quarterly', 'value': 'q'},
