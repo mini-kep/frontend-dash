@@ -84,11 +84,11 @@ class URL:
                 f'?freq={self.freq}&name={self.name}&format={format}')    
 
     @property
-    def text(self):
+    def custom_text(self):
         return f'series/{self.name}/{self.freq}'   
 
     @property
-    def custom(self):
+    def custom_link(self):
         return f'{self.BASE_URL}/all/series/{self.name}/{self.freq}'    
     
     @property
@@ -255,8 +255,8 @@ app.layout = html.Table([
     
 
 def custom_url_link(freq, name):
-    url = URL("d", "BRENT") 
-    return html.A(url.text, href=url.custom)
+    url = URL(freq, name)
+    return html.A(url.custom_link, href=url.custom_link)
 
     
 def varinfo(freq, name):
