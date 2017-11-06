@@ -258,9 +258,10 @@ def custom_url_link(freq, name):
 
     
 def varinfo(freq, name):
-    return [f'Frequency: {freq}, variable name: {name}',
-            html.Br(),
+    return [f'Frequency: {freq}, variable name: {name} ',
+            ' Custom URL: ',
             custom_url_link(freq, name)]
+    
     
 #start placeholders for variable information    
 @app.callback(output=Output('var1-info', 'children'),
