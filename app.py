@@ -60,53 +60,76 @@ app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
 app.title = 'mini-kep browser'
 
 
-BASE_URL = 'http://minikep-db.herokuapp.com/api'
+def fetch(url):
+    data = requests.get(url).json()
+    # if parameters are invalid, response is not a list
+    if not isinstance(data, list):
+         return []
+    return data
 
-def get_names_from_api(freq):
-    return requests.get(f'{BASE_URL}/names/{freq}').json()
 
-
-class Names:
-    """Varibale names by frequency."""
-
-    NAMES = {freq: get_names_from_api(freq) for freq in 'aqmd'}
-
-    def __init__(self, freq):
+class URL:    
+    
+    BASE_URL = 'http://minikep-db.herokuapp.com/api'
+    
+    def __init__ (self, freq, name=None):
         self.freq = freq
+        self.name = name
+    
+    def names(self):   
+        return f'{self.BASE_URL}/names/{self.freq}'
+    
+    def datapoints(self, format):
+        return (f'{self.BASE_URL}/datapoints'
+                f'?freq={self.freq}&name={self.name}&format={format}')    
+        
+    
+class RemoteAPI:
+    def __init__(self, freq, name=None):
+        self.freq = freq
+        self.name = name
+
+    @property
+    def names(self):
+        url = URL(self.freq).names()
+        return fetch(url)
     
     @property
-    def menu_items(self):
-        return [{'label': name, 'value': name} for name in self.NAMES.get(self.freq)]   
+    def json(self):
+        url = URL(self.freq, self.name).datapoints('json')
+        return fetch(url)
+
+    @property
+    def csv(self):
+        url = URL(self.freq, self.name).datapoints('csv')
+        return fetch(url)
 
 
-def frequencies():
-    return [
-        {'label': 'Annual', 'value': 'a'},
-        {'label': 'Quarterly', 'value': 'q'},
-        {'label': 'Monthly', 'value': 'm'},        
-        {'label': 'Daily', 'value': 'd'}
-    ]
+NAMES = {freq: RemoteAPI(freq).names for freq in 'aqmd'}
+
+class WidgetItems:
+
+    @classmethod
+    def names(freq):
+        """Varibale names by frequency."""
+        return [{'label': name, 'value': name} for name in NAMES.get(freq)]           
+    
+    @classmethod
+    def frequencies():
+        return [
+            {'label': 'Annual', 'value': 'a'},
+            {'label': 'Quarterly', 'value': 'q'},
+            {'label': 'Monthly', 'value': 'm'},        
+            {'label': 'Daily', 'value': 'd'}
+        ]
 
 
 class DataSeries:
     def __init__(self, freq, name):
         self.freq = freq
         self.name = name
-        self.data = self.get_from_api()
-        
-    @staticmethod
-    def make_url(freq, name, format):
-        return (f'{BASE_URL}/datapoints'
-                f'?freq={freq}&name={name}&format={format}')    
+        self.data = RemoteAPI(freq, name).json
     
-    def get_from_api(self):
-        url = self.make_url(self.freq, self.name, 'json')
-        data = requests.get(url).json()
-        # if parameters are invalid, response is not a jsoned list
-        if not isinstance(data, list):
-             return []
-        return data
-
     @staticmethod
     def get_year(datapoint):
         return datetime.strptime(datapoint['date'], "%Y-%m-%d").year
@@ -132,14 +155,8 @@ class DataSeries:
                     y = [d['value'] for d in self.data],
                     name = self.name)   
 
-# TODO:  move to tests
-assert DataSeries('a', 'GDP_yoy').filter(2000,2001).dict == \
-    {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
-
-
 MIN_YEAR=1999    
-# TODO: change MAX_YEAR when 2018 data arrives
-MAX_YEAR=2017
+MAX_YEAR=datetime.today().year
 
 def marks(min_year=MIN_YEAR, max_year=MAX_YEAR):
     marks = {i: "" for i in range(min_year, max_year)}
@@ -178,7 +195,7 @@ left_window = html.Div([
    dcc.Markdown(HEADER),
    dcc.RadioItems(
         id='frequency',
-        options=frequencies(),
+        options=WidgetItems.frequencies(),
         value=START_VALUES['freq']        
     ),
     dcc.Dropdown(id='name1', value = START_VALUES['name1']),
@@ -247,14 +264,12 @@ def update_varinfo2(freq, name):
 @app.callback(output=Output('name1', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names1(freq):
-    return Names(freq).menu_items
-
+    return WidgetItems.names(freq)
 
 @app.callback(output=Output('name2', component_property='options'), 
               inputs=[Input('frequency', component_property='value')])
 def update_names2(freq):
-    return Names(freq).menu_items
-
+    return WidgetItems.names(freq)
 
 def xrange(freq, years):
     """Updating x axis based on years selection in renage slider."""
