@@ -266,7 +266,10 @@ def custom_url_link(freq, name):
 
 def varinfo(freq, name):
     info = RemoteAPI(freq, name).info
-    start, end = (info[key] for key in ('start_date', 'end_date'))
+    try:                
+       start, end = (info[key] for key in ('start_date', 'end_date'))
+    except KeyError:
+       start, end = '', ''
     return [f'Frequency: {freq}, variable name: {name}, ',
             f'start: {start}, end: {end}, ', 
              'custom URL: ', custom_url_link(freq, name)]
