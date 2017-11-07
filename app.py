@@ -309,13 +309,27 @@ def xrange(freq, years):
     """Updating x axis based on years selection in renage slider."""
     if freq == 'a':
         start = years[0] - 2
-        end = years[1] + 2
+        end = years[1] + 3
         return dict(range=["{start}", "{end}"])
     else:
         start = years[0] - 2
-        end = years[1] + 1
+        end = years[1] + 2
         return dict(range=[f"{start}-12-31", f"{end}-12-31"])
 
+
+
+def annotation_item(data_dict):
+    x, y = get_last(data_dict)
+    return dict(xref='x', yref='y',
+                x=x, y=y,
+                font=dict(color='black'),
+                xanchor='left', 
+                yanchor='middle',
+                text=f' {y}',
+                showarrow=False)
+
+def get_last(data_dict):
+    return data_dict['x'][-1], data_dict['y'][-1] 
 
 @app.callback(output=Output('time-series-graph', 'figure'),
               inputs=[Input('frequency', component_property='value'),
@@ -324,14 +338,20 @@ def xrange(freq, years):
                       Input('view-years', component_property='value'),
                       ])
 def update_graph_parameters(freq, name1, name2, years):
-    layout_dict = dict(margin={'l': 40, 'r': 0, 't': 20, 'b': 30},
-                       legend=dict(orientation="h"),
-                       showlegend=True)
-    data_list = [DataSeries(freq, name1).filter(*years).dict]
+    # data 
+    ts1 = DataSeries(freq, name1).filter(*years).dict
+    anno = [annotation_item(ts1)]
+    data_list = [ts1]
     if name2:
         ts2 = DataSeries(freq, name2).filter(*years).dict
         data_list.append(ts2)
+        anno.append(annotation_item(ts2))
+    # layout
+    layout_dict = dict(margin={'l': 40, 'r': 0, 't': 20, 'b': 30},
+                       legend=dict(orientation="h"),
+                       showlegend=True)   
     layout_dict['xaxis'] = xrange(freq, years)
+    layout_dict['annotations'] = anno
     return dict(layout=layout_dict, data=data_list)
 
 
@@ -362,3 +382,4 @@ def update_link_parameters(freq, name1, name2):
 if __name__ == '__main__':
     port = os.environ.get('DASH_PORT', 8000)
     app.server.run(debug=True, threaded=True, port=int(port))
+    
