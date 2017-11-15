@@ -273,7 +273,26 @@ def varinfo(freq, name):
     return [f'Frequency: {freq}, variable name: {name}, ',
             f'start: {start}, end: {end}, ', 
              'custom URL: ', custom_url_link(freq, name)]
-
+# --------------------------------------------------------------------------
+# FIMXE:  this is a call back to update variabl einformation on the screen, it is 
+#         a  draft / placeholder
+#
+# Needed following change
+#
+#        a. Layout: make every variable information block an html table 
+#        
+#        Variable         BRENT
+#        Frequency:       d
+#        Start:           1987-05-20
+#        End:             2017-10-30
+#        Latest value:    60.65
+#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>      
+#        Short link:      <oil/series/BRENT/d>      
+#        More info:       <api/info?name=BRENT>
+#
+#        b. content - retrieve this data from api/info?name=BRENT
+#
+#        c. NOT TODO: update with slider change ?  
 
 # start placeholders for variable information
 @app.callback(output=Output('var1-info', 'children'),
@@ -291,7 +310,7 @@ def update_varinfo1(freq, name):
 def update_varinfo2(freq, name):
     return varinfo(freq, name)
 # end placeholders for variable information
-
+# ------------------------------------------------------------------------
 
 @app.callback(output=Output('name1', component_property='options'),
               inputs=[Input('frequency', component_property='value')])
