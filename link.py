@@ -6,12 +6,13 @@ class BrowserURL:
     def __init__(self, url_path):
         legs = [leg for leg in url_path.split("/") if leg] 
         self.freq = legs[0]
-        self.name2 = None
-        if '+' in legs[1]: 
-            self.name1, self.name2 = legs[1].split('+')
-        else:
-            self.name1 = legs[1]        
+        self.names = legs[1].split('+')
 
+assert BrowserURL('/d/BRENT').freq == 'd' 
+assert BrowserURL('/d/BRENT').names == ['BRENT'] 
+assert BrowserURL('/d/BRENT+USDRUR_CB').names == ['BRENT', 'USDRUR_CB'] 
+assert BrowserURL('zzz/GDP_yoy+CPI_rog').freq == 'zzz'
+assert BrowserURL('zzz/a+b').names == ['a', 'b']
 
 
 app = dash.Dash()
@@ -19,7 +20,6 @@ app = dash.Dash()
 app.layout = html.Div([
     # represents the URL bar, doesn't render anything
     dcc.Location(id='url', refresh=False),
-
     # content will be rendered in this element
     html.Div(id='page-content')
 ])
@@ -30,9 +30,14 @@ app.layout = html.Div([
 def display_page(pathname):
     bu = BrowserURL(pathname)
     return html.Div([
+
+# ------- app.py main table goes here -----------------           
+            
+            
         html.Div([f'frequency: {bu.freq}']),
-        html.Div([f'name1: {bu.name1}']),
-        html.Div([f'name2: {bu.name2}'])
+        html.Div([f'names: {bu.names}']),
+
+# -----------------------------------------------------
     ])    
     
 app.css.append_css({
