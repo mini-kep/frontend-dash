@@ -1,3 +1,16 @@
+"""
+
+Dash multi-page navigation:
+    
+    - dcc.Location(id='url', refresh=False) catches browser url
+    - .pathname property passes tail of url to callback function display_page()
+    - display_page() alters html.Div(id='page-content')
+    - html.Div(id='page-content') displays rest of app in div tag
+    - app should take account incoming parameters, passed through url
+
+Based on examples at https://plot.ly/dash/urls
+
+"""
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
