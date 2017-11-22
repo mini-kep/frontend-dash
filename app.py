@@ -62,8 +62,8 @@ def get_list(url):
     return data
 
 
+# NOT TODO: this may need change
 class URL:
-
     def __init__(self, freq, name=None):
         self.freq = freq
         self.name = name
@@ -259,85 +259,74 @@ def custom_url_link(freq, name):
     return html.A(url.custom_text, href=url.custom_link)
 
 
-def varinfo(freq, names):
-    info = [RemoteAPI(freq, name).info for name in names]
+def get_start_date(freq, name):
+    return RemoteAPI(freq, name).info[freq].get('start_date', '')
 
+
+def get_latest_date(freq, name):
+    return RemoteAPI(freq, name).info[freq].get('latest_date', '')
+
+
+def get_latest_value(freq, name):
+    return RemoteAPI(freq, name).info[freq].get('latest_value', '')
+
+
+def get_download_link(freq, name):
+    return html.A('link', href=f'{BASE_URL}/api/datapoints?freq={freq}&name={name}&format=csv')
+
+
+def get_short_link(freq, name):
+    return html.A('link', href=f'{BASE_URL}/oil/series/{name}/{freq}')
+
+
+def get_info_link(freq, name):
+    return html.A('link', href=f'{BASE_URL}/api/info?freq={freq}&name={name}')
+
+
+def varinfo(freq, name):
     return html.Table([
         html.Tr([html.Th('Variable'),
-                 html.Td(names[0]),
-                 html.Td(names[1]),
+                 html.Td(name),
                  ]),
-        html.Tr([
-            html.Th('Frequency'),
-            html.Td(freq),
-            html.Td(freq)]),
-        html.Tr([
-            html.Th('Start'),
-            html.Td((info[0][freq].get('start_date', ''))),
-            html.Td((info[1][freq].get('start_date', ''))),
-        ]),
-        html.Tr([
-            html.Th('End'),
-            html.Td((info[0][freq].get('latest_date', ''))),
-            html.Td((info[1][freq].get('latest_date', ''))),
-        ]),
-        html.Tr([
-            html.Th('Latest value'),
-            html.Td((info[0][freq].get('latest_value', ''))),
-            html.Td((info[1][freq].get('latest_value', ''))),
-        ]),
-        html.Tr([
-            html.Th('Download'),
-            html.Td(html.A('link', href=f'{BASE_URL}/api/datapoints?freq={freq}&name={names[0]}&format=csv')),
-            html.Td(html.A('link', href=f'{BASE_URL}/api/datapoints?freq={freq}&name={names[1]}&format=csv')),
-        ]),
-        html.Tr([
-            html.Th('Short link'),
-            html.Td(html.A('link', href=f'{BASE_URL}/oil/series/{names[0]}/{freq}')),
-            html.Td(html.A('link', href=f'{BASE_URL}/oil/series/{names[1]}/{freq}')),
-        ]),
-        html.Tr([
-            html.Th('More info'),
-            html.Td(html.A('link', href=f'{BASE_URL}/api/info?freq={freq}&name={names[0]}')),
-            html.Td(html.A('link', href=f'{BASE_URL}/api/info?freq={freq}&name={names[1]}')),
-        ]),
+        html.Tr([html.Th('Frequency'),
+                 html.Td(freq)
+                 ]),
+        html.Tr([html.Th('Start'),
+                 html.Td(get_start_date(freq, name)),
+                 ]),
+        html.Tr([html.Th('End'),
+                 html.Td(get_latest_date(freq, name)),
+                 ]),
+        html.Tr([html.Th('Latest value'),
+                 html.Td(get_latest_value(freq, name)),
+                 ]),
+        html.Tr([html.Th('Download'),
+                 html.Td(get_download_link(freq, name)),
+                 ]),
+        html.Tr([html.Th('Short link'),
+                 html.Td(get_short_link(freq, name)),
+                 ]),
+        html.Tr([html.Th('More info'),
+                 html.Td(get_info_link(freq, name)),
+                 ]),
         html.Br(),
     ])
 
 
-# --------------------------------------------------------------------------
-# FIMXE:  this is a call back to update variabl einformation on the screen, it is
-#         a  draft / placeholder
-#
-# Needed following change
-#
-#        a. Layout: make every variable information block an html table
-#
-#        Variable         BRENT
-#        Frequency:       d
-#        Start:           1987-05-20
-#        End:             2017-10-30
-#        Latest value:    60.65
-#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>
-#        Short link:      <oil/series/BRENT/d>
-#        More info:       <api/info?name=BRENT>
-#
-#        b. content - retrieve this data from api/info?name=BRENT
-#
-#        c. NOT TODO: update with slider change ?
-
-# start placeholders for variable information
 @app.callback(output=Output('var1-info', 'children'),
               inputs=[Input('frequency', component_property='value'),
                       Input('name1', component_property='value'),
-                      Input('name2', component_property='value'),
                       ])
-def update_varinfo1(freq, name1, name2):
-    return varinfo(freq, (name1, name2))
+def update_varinfo1(freq, name):
+    return varinfo(freq, name)
 
 
-# end placeholders for variable information
-# ------------------------------------------------------------------------
+@app.callback(output=Output('var2-info', 'children'),
+              inputs=[Input('frequency', component_property='value'),
+                      Input('name2', component_property='value')
+                      ])
+def update_varinfo2(freq, name):
+    return varinfo(freq, name)
 
 
 @app.callback(output=Output('name1', component_property='options'),
