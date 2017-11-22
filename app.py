@@ -14,7 +14,6 @@ Scenario:
 4. select indicator 2 by name in drop-down menu
   -> choosing name affects plot and download footer
 
-
 5. Slider controls source date range and axis range. When changing
    source the Y axis changes as well.
 
@@ -239,7 +238,6 @@ left_window = html.Div([
 )
 
 right_window = html.Div([
-    #html.Div([], ),
     html.Div(id='var1-info', style={'marginTop': 25}),
     html.Div(id='var2-info', style={'marginBottom': 25}),
     dcc.Markdown(FOOTER)
@@ -251,63 +249,34 @@ app.layout = html.Table([
         html.Td(right_window, style={'verticalAlign': 'top'})
     ])
 ])
-    
 
-#
+
 # Needed following change
 #
-#        a. Layout: make every variable information block an html table 
-#        
+#        a. Layout: make every variable information block an html table
+#
 #        Variable         BRENT
 #        Frequency:       d
 #        Start:           1987-05-20
 #        End:             2017-10-30
 #        Latest value:    60.65
-#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>      
-#        Short link:      <oil/series/BRENT/d>      
+#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>
+#        Short link:      <oil/series/BRENT/d>
 #        More info:       <api/info?name=BRENT>
 #
 #        b. content - retrieve this data from api/info?name=BRENT
 #
-#        c. NOT TODO: update with slider change ?      
+#        c. NOT TODO: update with slider change ?
 
-
-#def custom_url_link(freq, name):
-#    url = URL(freq, name)
-#    return html.A(url.custom_text, href=url.custom_link)
-#
-#
-#def get_start_date(freq, name):
-#    return RemoteAPI(freq, name).info[freq].get('start_date', '')
-#
-#
-#def get_latest_date(freq, name):
-#    return RemoteAPI(freq, name).info[freq].get('latest_date', '')
-#
-#
-#def get_latest_value(freq, name):
-#    return RemoteAPI(freq, name).info[freq].get('latest_value', '')
-
-
-def get_download_link(freq, name):
-    return html.A('link', href=f'{BASE_URL}/api/datapoints?freq={freq}&name={name}&format=csv')
-
-
-def get_short_link(freq, name):
-    return html.A('link', href=f'{BASE_URL}/oil/series/{name}/{freq}')
-
-
-def get_info_link(freq, name):
-    return html.A('link', href=f'{BASE_URL}/api/info?freq={freq}&name={name}')
 
 class VarInfo:
     def __init__(self, freq, name):
         self.freq = freq
         url = URL(freq, name).info()
         self.info = fetch(url)
-        
+
     def __getattr__(self, x):
-        return self.info[self.freq].get(x) 
+        return self.info[self.freq].get(x)
 
 
 def short_link(freq, name):
@@ -321,7 +290,7 @@ def download_link(freq, name):
 
 
 def make_row(x):
-    return  html.Tr([html.Td(x[0]), html.Td(x[1])])   
+    return html.Tr([html.Td(x[0]), html.Td(x[1])])
 
 
 def make_html_table(table_elements):
@@ -331,9 +300,10 @@ def make_html_table(table_elements):
 
 # WONTFIX: variables too close together
 
-def varinfo(freq, name):        
+
+def varinfo(freq, name):
     vi = VarInfo(freq, name)
-    table_elements = [ 
+    table_elements = [
         (html.B('Variable'), html.B(name)),
         # WONTFIX: repeated in two tables
         ('Frequency', freq),
@@ -345,37 +315,6 @@ def varinfo(freq, name):
         ('Short link', short_link(freq, name))
     ]
     return make_html_table(table_elements)
-       
-    
-#    return html.Table([
-#        html.Tr([html.Th('Variable'),
-#                 html.Td(name),
-#                 ]),
-#        html.Tr([html.Th('Frequency'),
-#                 html.Td(freq)
-#                 ]),
-#        html.Tr([html.Th('Start'),
-#                 html.Td(get_start_date(freq, name)),
-#                 ]),
-#        html.Tr([html.Th('End'),
-#                 html.Td(get_latest_date(freq, name)),
-#                 ]),
-#        html.Tr([html.Th('Latest value'),
-#                 html.Td(get_latest_value(freq, name)),
-#                 ]),
-#        html.Tr([html.Th('Download'),
-#                 html.Td(get_download_link(freq, name)),
-#                 ]),
-#        html.Tr([html.Th('Short link'),
-#                 html.Td(get_short_link(freq, name)),
-#                 ]),
-#        html.Tr([html.Th('More info'),
-#                 html.Td(get_info_link(freq, name)),
-#                 ]),
-#        html.Br(),
-#    ])
-    
-    
 
 
 @app.callback(output=Output('var1-info', 'children'),
