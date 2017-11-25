@@ -14,36 +14,27 @@ Scenario:
 4. select indicator 2 by name in drop-down menu
   -> choosing name affects plot and download footer
 
-
 5. Slider controls source date range and axis range. When changing
    source the Y axis changes as well.
 
-"""
-
-"""
 NOT IMPLMENTED:
 
 1. Group selector added before each variable name selector.
 
-2. One link for csv with two variables (requires API change or
-   merging dataframes, a bit harder for daily data).
-
-3. Annotation for the last observation value.
+2. Annotation for the last observation value.
 
 """
 
+import os
+import flask
+import requests
 from datetime import datetime
 from random import randint
-import os
 
-import flask
 import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
-
-import requests
-
 
 # Setup from <https://github.com/plotly/dash-heroku-template>
 # > the template is configured to execute 'server' on 'app.py'
@@ -55,6 +46,7 @@ app = dash.Dash(__name__, server=server)
 app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
 app.title = 'mini-kep browser'
 
+BASE_URL = 'http://minikep-db.herokuapp.com'
 
 
 def fetch(url):
@@ -69,24 +61,26 @@ def get_list(url):
     return data
 
 
+# NOT TODO: this may need change
 class URL:
-
-    BASE_URL = 'http://minikep-db.herokuapp.com'
-
     def __init__(self, freq, name=None):
         self.freq = freq
         self.name = name
 
     def info(self):
-        return (f'{self.BASE_URL}/api/info'
+        return (f'{BASE_URL}/api/info'
                 f'?freq={self.freq}&name={self.name}')
 
     def names(self):
-        return f'{self.BASE_URL}/api/names/{self.freq}'
+        return f'{BASE_URL}/api/names/{self.freq}'
 
     def datapoints(self, format):
-        return (f'{self.BASE_URL}/api/datapoints'
+        return (f'{BASE_URL}/api/datapoints'
                 f'?freq={self.freq}&name={self.name}&format={format}')
+
+    def frame(self, names, start_date, end_date):
+        return (f'{BASE_URL}/api/frame?freq={self.freq}&names={names}'
+                f'&start_date={start_date}&end_date={end_date}')
 
     @property
     def custom_text(self):
@@ -94,7 +88,7 @@ class URL:
 
     @property
     def custom_link(self):
-        return f'{self.BASE_URL}/all/series/{self.name}/{self.freq}'
+        return f'{BASE_URL}/all/series/{self.name}/{self.freq}'
 
     @property
     def csv(self):
@@ -105,7 +99,7 @@ class RemoteAPI:
     def __init__(self, freq, name=None):
         self.freq = freq
         self.name = name
-        
+
     @property
     def info(self):
         url = URL(self.freq, self.name).info()
@@ -131,7 +125,6 @@ NAMES = {freq: RemoteAPI(freq).names for freq in 'aqmd'}
 
 
 class WidgetItems:
-
     @classmethod
     def names(cls, freq):
         """Varibale names by frequency."""
@@ -161,6 +154,7 @@ class DataSeries:
         def is_in_range(datapoint):
             year = self.get_year(datapoint)
             return year >= start and year <= end
+
         self.data = [d for d in self.data if is_in_range(d)]
         return self
 
@@ -189,6 +183,7 @@ def marks(min_year=MIN_YEAR, max_year=MAX_YEAR):
         marks[year] = str(year)
     return marks
 
+
 # app.layout controls HTML layout of dcc components on page:
 #  - header and footer markdown blocks
 #  - radio items
@@ -214,7 +209,6 @@ FOOTER = '''
 '''
 
 START_VALUES = dict(freq='q', name1='GDP_yoy', name2='CPI_rog')
-
 
 left_window = html.Div([
     dcc.Markdown(HEADER),
@@ -244,60 +238,88 @@ left_window = html.Div([
 )
 
 right_window = html.Div([
-    html.Div(["Variable information"], style={'fontWeight': 'bold',
-                                              'marginTop': 100}),
-    html.Div(id='var1-info'),
-    html.Div(id='var2-info'),
+    html.Div(id='var1-info', style={'marginTop': 25}),
+    html.Div(id='var2-info', style={'marginBottom': 25}),
     dcc.Markdown(FOOTER)
 ])
 
 app.layout = html.Table([
     html.Tr([
-            html.Td(left_window, style={'verticalAlign': 'top'}),
-            html.Td(right_window, style={'verticalAlign': 'top'})
-            ])
+        html.Td(left_window, style={'verticalAlign': 'top'}),
+        html.Td(right_window, style={'verticalAlign': 'top'})
+    ])
 ])
 
 
-def custom_url_link(freq, name):
-    url = URL(freq, name)
-    return html.A(url.custom_text, href=url.custom_link)
-
-
-def varinfo(freq, name):
-    info = RemoteAPI(freq, name).info
-    try:                
-       start, end = (info[key] for key in ('start_date', 'end_date'))
-    except KeyError:
-       start, end = '', ''
-    return [f'Frequency: {freq}, variable name: {name}, ',
-            f'start: {start}, end: {end}, ', 
-             'custom URL: ', custom_url_link(freq, name)]
-# --------------------------------------------------------------------------
-# FIMXE:  this is a call back to update variabl einformation on the screen, it is 
-#         a  draft / placeholder
-#
 # Needed following change
 #
-#        a. Layout: make every variable information block an html table 
-#        
+#        a. Layout: make every variable information block an html table
+#
 #        Variable         BRENT
 #        Frequency:       d
 #        Start:           1987-05-20
 #        End:             2017-10-30
 #        Latest value:    60.65
-#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>      
-#        Short link:      <oil/series/BRENT/d>      
+#        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>
+#        Short link:      <oil/series/BRENT/d>
 #        More info:       <api/info?name=BRENT>
 #
 #        b. content - retrieve this data from api/info?name=BRENT
 #
-#        c. NOT TODO: update with slider change ?  
+#        c. NOT TODO: update with slider change ?
 
-# start placeholders for variable information
+
+class VarInfo:
+    def __init__(self, freq, name):
+        self.freq = freq
+        url = URL(freq, name).info()
+        self.info = fetch(url)
+
+    def __getattr__(self, x):
+        return self.info[self.freq].get(x)
+
+
+def short_link(freq, name):
+    text = f'ru/series/{name}/{freq}'
+    return html.A(text, href=f'{BASE_URL}/{text}')
+
+
+def download_link(freq, name):
+    text = f'api/datapoints?freq={freq}&name={name}'
+    return html.A(text, href=f'{BASE_URL}/{text}')
+
+
+def make_row(x):
+    return html.Tr([html.Td(x[0]), html.Td(x[1])])
+
+
+def make_html_table(table_elements):
+    return html.Table([make_row(x) for x in table_elements])
+
+# WONTFIX: freq repeated in two tables
+
+# WONTFIX: variables too close together
+
+
+def varinfo(freq, name):
+    vi = VarInfo(freq, name)
+    table_elements = [
+        (html.B('Variable'), html.B(name)),
+        # WONTFIX: repeated in two tables
+        ('Frequency', freq),
+        ('Start', vi.start_date),
+        ('End', vi.latest_date),
+        # WONTFIX: will show 'reserved'
+        ('Latest value', vi.latest_value),
+        ('Download', download_link(freq, name)),
+        ('Short link', short_link(freq, name))
+    ]
+    return make_html_table(table_elements)
+
+
 @app.callback(output=Output('var1-info', 'children'),
               inputs=[Input('frequency', component_property='value'),
-                      Input('name1', component_property='value')
+                      Input('name1', component_property='value'),
                       ])
 def update_varinfo1(freq, name):
     return varinfo(freq, name)
@@ -309,8 +331,7 @@ def update_varinfo1(freq, name):
                       ])
 def update_varinfo2(freq, name):
     return varinfo(freq, name)
-# end placeholders for variable information
-# ------------------------------------------------------------------------
+
 
 @app.callback(output=Output('name1', component_property='options'),
               inputs=[Input('frequency', component_property='value')])
@@ -325,7 +346,7 @@ def update_names2(freq):
 
 
 def xrange(freq, years):
-    """Updating x axis based on years selection in renage slider."""
+    """Updating x axis based on years selection in range slider."""
     if freq == 'a':
         start = years[0] - 2
         end = years[1] + 3
@@ -336,19 +357,20 @@ def xrange(freq, years):
         return dict(range=[f"{start}-12-31", f"{end}-12-31"])
 
 
-
 def annotation_item(data_dict):
     x, y = get_last(data_dict)
     return dict(xref='x', yref='y',
                 x=x, y=y,
                 font=dict(color='black'),
-                xanchor='left', 
+                xanchor='left',
                 yanchor='middle',
                 text=f' {y}',
                 showarrow=False)
 
+
 def get_last(data_dict):
-    return data_dict['x'][-1], data_dict['y'][-1] 
+    return data_dict['x'][-1], data_dict['y'][-1]
+
 
 @app.callback(output=Output('time-series-graph', 'figure'),
               inputs=[Input('frequency', component_property='value'),
@@ -357,7 +379,7 @@ def get_last(data_dict):
                       Input('view-years', component_property='value'),
                       ])
 def update_graph_parameters(freq, name1, name2, years):
-    # data 
+    # data
     ts1 = DataSeries(freq, name1).filter(*years).dict
     anno = [annotation_item(ts1)]
     data_list = [ts1]
@@ -368,7 +390,7 @@ def update_graph_parameters(freq, name1, name2, years):
     # layout
     layout_dict = dict(margin={'l': 40, 'r': 0, 't': 20, 'b': 30},
                        legend=dict(orientation="h"),
-                       showlegend=True)   
+                       showlegend=True)
     layout_dict['xaxis'] = xrange(freq, years)
     layout_dict['annotations'] = anno
     return dict(layout=layout_dict, data=data_list)
@@ -378,9 +400,9 @@ def update_graph_parameters(freq, name1, name2, years):
 # <https://community.plot.ly/t/annotation-not-showing-on-dash-dcc-graph/6660>
 
 
-def download_html(freq, name):
-    link_text = f'{freq}_{name}.csv'
-    url = URL(freq, name).datapoints('csv')
+def download_data_html(freq, names, years):
+    link_text = 'csv'
+    url = URL(freq).frame(names, *years)
     return html.A(link_text, href=url)
 
 
@@ -388,17 +410,16 @@ def download_html(freq, name):
               inputs=[Input('frequency', component_property='value'),
                       Input('name1', component_property='value'),
                       Input('name2', component_property='value'),
+                      Input('view-years', component_property='value'),
                       ])
-def update_link_parameters(freq, name1, name2):
-    link1 = link2 = None
-    if freq and name1:
-        link1 = download_html(freq, name1)
-    if freq and name2:
-        link2 = download_html(freq, name2)
-    return ["Download data: ", link1, " ", link2]
+def update_link_parameters(freq, name1, name2, years):
+    link1 = None
+    (names,) = [','.join((name1, name2)) if name1 and name2 else name1 or name2]
+    if freq and names:
+        link1 = download_data_html(freq, names, years)
+    return ["Download data: ", link1]
 
 
 if __name__ == '__main__':
     port = os.environ.get('DASH_PORT', 8000)
     app.server.run(debug=True, threaded=True, port=int(port))
-    
