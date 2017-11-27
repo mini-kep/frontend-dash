@@ -21,13 +21,20 @@ NOT IMPLMENTED:
 
 1. Group selector added before each variable name selector.
 
-2. Annotation for the last observation value.
+2. Position right pane
 
+3. Show latest value 
+
+4. Show var and unit description
+
+5. Default vars for frequency
+
+6. More html header
 """
+
 
 import os
 import flask
-import requests
 from datetime import datetime
 from random import randint
 
@@ -35,6 +42,8 @@ import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
+
+import access
 
 # Setup from <https://github.com/plotly/dash-heroku-template>
 # > the template is configured to execute 'server' on 'app.py'
@@ -44,84 +53,10 @@ app = dash.Dash(__name__, server=server)
 
 # app properties
 app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
-app.title = 'mini-kep browser'
-
-BASE_URL = 'http://minikep-db.herokuapp.com'
+app.title = 'Macro dataset browser'
 
 
-def fetch(url):
-    return requests.get(url).json()
-
-
-def get_list(url):
-    data = fetch(url)
-    # if parameters are invalid, response is not a list
-    if not isinstance(data, list):
-        return []
-    return data
-
-
-# NOT TODO: this may need change
-class URL:
-    def __init__(self, freq, name=None):
-        self.freq = freq
-        self.name = name
-
-    def info(self):
-        return (f'{BASE_URL}/api/info'
-                f'?freq={self.freq}&name={self.name}')
-
-    def names(self):
-        return f'{BASE_URL}/api/names/{self.freq}'
-
-    def datapoints(self, format):
-        return (f'{BASE_URL}/api/datapoints'
-                f'?freq={self.freq}&name={self.name}&format={format}')
-
-    def frame(self, names, start_date, end_date):
-        return (f'{BASE_URL}/api/frame?freq={self.freq}&names={names}'
-                f'&start_date={start_date}&end_date={end_date}')
-
-    @property
-    def custom_text(self):
-        return f'series/{self.name}/{self.freq}'
-
-    @property
-    def custom_link(self):
-        return f'{BASE_URL}/all/series/{self.name}/{self.freq}'
-
-    @property
-    def csv(self):
-        return self.datapoints('csv')
-
-
-class RemoteAPI:
-    def __init__(self, freq, name=None):
-        self.freq = freq
-        self.name = name
-
-    @property
-    def info(self):
-        url = URL(self.freq, self.name).info()
-        return fetch(url)
-
-    @property
-    def names(self):
-        url = URL(self.freq).names()
-        return get_list(url)
-
-    @property
-    def json(self):
-        url = URL(self.freq, self.name).datapoints('json')
-        return get_list(url)
-
-    @property
-    def csv(self):
-        url = URL(self.freq, self.name).datapoints('csv')
-        return get_list(url)
-
-
-NAMES = {freq: RemoteAPI(freq).names for freq in 'aqmd'}
+NAMES = {freq: access.get_names(freq) for freq in 'aqmd'}
 
 
 class WidgetItems:
@@ -144,7 +79,7 @@ class DataSeries:
     def __init__(self, freq, name):
         self.freq = freq
         self.name = name
-        self.data = RemoteAPI(freq, name).json
+        self.data = access.DatapointsJSON(freq, name).json()
 
     @staticmethod
     def get_year(datapoint):
@@ -184,28 +119,18 @@ def marks(min_year=MIN_YEAR, max_year=MAX_YEAR):
     return marks
 
 
-# app.layout controls HTML layout of dcc components on page:
-#  - header and footer markdown blocks
-#  - radio items
-#  - 2 dropdown menus
-#  - graph with time series
-#  - slider for timerange
-#  - links to download data
-
 
 HEADER = '''
 # Explore mini-kep dataset
-
-Use controls below to select time series frequency and variable names.
 '''
 
-FOOTER = '''
-**Github links**:
+# Use controls below to select time series frequency and variable names.
 
-  - [This app code](https://github.com/mini-kep/frontend-dash)
-  - [Project home](https://github.com/mini-kep/intro) and
-    [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md)
-  - [Trello issues board](https://trello.com/b/ioHBMwH7/minikep)
+FOOTER = '''Links: 
+  [project home](https://github.com/mini-kep/intro),
+  [app code](https://github.com/mini-kep/frontend-dash), 
+  [dev notes](https://github.com/mini-kep/intro/blob/master/DEV.md), 
+  [Trello issues](https://trello.com/b/ioHBMwH7/minikep)
 '''
 
 START_VALUES = dict(freq='q', name1='GDP_yoy', name2='CPI_rog')
@@ -229,31 +154,39 @@ left_window = html.Div([
             marks=marks(),
             value=[MIN_YEAR, MAX_YEAR]
         )
-    ], style={'marginBottom': '50'}),
+            ], style={'marginBottom': '50'}
+            ),
     html.Div(id='download-links'),
-], style={'width': '500',
-          'marginTop': 10,
-          'marginLeft': 50,
-          'marginRight': 100}
+], style={'width': '500'}
 )
 
 right_window = html.Div([
-    html.Div(id='var1-info', style={'marginTop': 25}),
+    html.Div(id='var1-info', style={'marginBottom': 25}),
     html.Div(id='var2-info', style={'marginBottom': 25}),
-    dcc.Markdown(FOOTER)
-])
+], style={'marginRight': 75})
 
-app.layout = html.Table([
-    html.Tr([
+
+tr1 = html.Tr([
         html.Td(left_window, style={'verticalAlign': 'top'}),
-        html.Td(right_window, style={'verticalAlign': 'top'})
+        html.Td(right_window, style={'verticalAlign': 'top'}),
     ])
-])
 
+# TODO: two extra hr-like lines appear 
 
-# Needed following change
+app.layout =  html.Div([
+       
+        html.Table([tr1]),
+        
+        html.Div(dcc.Markdown(FOOTER), style={'marginTop': 15})          
+        
+        ], style={'marginTop': 25, 'marginLeft': 50})
+    
+    
+# callbacks    
+    
+
 #
-#        a. Layout: make every variable information block an html table
+#        information block 
 #
 #        Variable         BRENT
 #        Frequency:       d
@@ -262,56 +195,32 @@ app.layout = html.Table([
 #        Latest value:    60.65
 #        Download:        <api/datapoints?freq=d&name=BRENT&format=csv>
 #        Short link:      <oil/series/BRENT/d>
-#        More info:       <api/info?name=BRENT>
-#
-#        b. content - retrieve this data from api/info?name=BRENT
-#
-#        c. NOT TODO: update with slider change ?
-
-
-class VarInfo:
-    def __init__(self, freq, name):
-        self.freq = freq
-        url = URL(freq, name).info()
-        self.info = fetch(url)
-
-    def __getattr__(self, x):
-        return self.info[self.freq].get(x)
-
-
-def short_link(freq, name):
-    text = f'ru/series/{name}/{freq}'
-    return html.A(text, href=f'{BASE_URL}/{text}')
-
-
-def download_link(freq, name):
-    text = f'api/datapoints?freq={freq}&name={name}'
-    return html.A(text, href=f'{BASE_URL}/{text}')
 
 
 def make_row(x):
     return html.Tr([html.Td(x[0]), html.Td(x[1])])
 
-
 def make_html_table(table_elements):
     return html.Table([make_row(x) for x in table_elements])
 
-# WONTFIX: freq repeated in two tables
+# FIXME: freq repeated in two tables
 
-# WONTFIX: variables too close together
-
+def short_link(freq, name):
+    cu = access.CustomAPI(freq, name)
+    text = cu.endpoint
+    return html.A(text, href=cu.url)
 
 def varinfo(freq, name):
-    vi = VarInfo(freq, name)
+    vi = access.VarInfo(freq, name)
     table_elements = [
         (html.B('Variable'), html.B(name)),
-        # WONTFIX: repeated in two tables
+        ('Description', 'reserved'),
         ('Frequency', freq),
         ('Start', vi.start_date),
-        ('End', vi.latest_date),
-        # WONTFIX: will show 'reserved'
+        ('Latest date', vi.latest_date),
+        # FIMXE in API: shows 'reserved'
         ('Latest value', vi.latest_value),
-        ('Download', download_link(freq, name)),
+        #('Download', download_link(freq, name)),
         ('Short link', short_link(freq, name))
     ]
     return make_html_table(table_elements)
@@ -396,13 +305,10 @@ def update_graph_parameters(freq, name1, name2, years):
     return dict(layout=layout_dict, data=data_list)
 
 
-# FIXME: annotations
-# <https://community.plot.ly/t/annotation-not-showing-on-dash-dcc-graph/6660>
-
-
 def download_data_html(freq, names, years):
-    link_text = 'csv'
-    url = URL(freq).frame(names, *years)
+    link_text = 'Download data in CSV format'
+    url = access.Frame(freq, names).url
+    # FIXME: bring back years
     return html.A(link_text, href=url)
 
 
@@ -414,10 +320,25 @@ def download_data_html(freq, names, years):
                       ])
 def update_link_parameters(freq, name1, name2, years):
     link1 = None
-    (names,) = [','.join((name1, name2)) if name1 and name2 else name1 or name2]
+    # FIXME: must simplify
+    # (names,) = [','.join((name1, name2)) if name1 and name2 else name1 or name2]
+    names = []
+    for name in (name1, name2):
+        if name: 
+            names.append(name)
     if freq and names:
         link1 = download_data_html(freq, names, years)
-    return ["Download data: ", link1]
+    return [link1]
+
+
+# app.layout controls HTML layout of dcc components on page:
+#  - header and footer markdown blocks
+#  - radio items
+#  - 2 dropdown menus
+#  - graph with time series
+#  - slider for timerange
+#  - links to download data
+
 
 
 if __name__ == '__main__':
