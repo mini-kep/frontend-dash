@@ -6,6 +6,6 @@ def test_DataSeries_filter_limits_variable_length():
         {'x': [2000, 2001], 'y': [110.0, 105.1], 'name': 'GDP_yoy'}
         
 def test_CustomAPI_endpoint():
-    ca = access.CustomAPI(freq="d", name="BRENT")
+    ca = CustomAPI(freq="d", name="BRENT")
     assert ca.endpoint == \
         'http://minikep-db.herokuapp.com/all/series/BRENT/d'        
