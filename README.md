@@ -4,4 +4,4 @@
 
 Run locally: `python app.py`
 
-Deployed at: <http://macrodash.herokuapp.com> 
+Deployed at <http://macrodash.herokuapp.com> 
