@@ -1,9 +1,36 @@
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 
-def test_open_page():
-    driver = webdriver.Chrome(ChromeDriverManager().install())
-    driver.get("http://127.0.0.1:8000/")
-    assert driver.find_element_by_id("frequency").is_displayed()
-    driver.quit()
+def test_page_load(driver, local_url):
+    driver.get(local_url)
+    assert driver.find_element_by_id('frequency').is_displayed(), 'Frequency not show!'
+
+
+def test_header_page(driver, local_url):
+    driver.get(local_url)
+    text = wait_until(driver, 30, By.XPATH, '//h1').text
+    assert text == 'Explore mini-kep dataset', 'Wrong header text'
+
+
+def test_graph_load(driver, local_url):
+    driver.get(local_url)
+    assert driver.find_element_by_id('time-series-graph').is_displayed(), 'Graph not show!'
+
+
+def test_table1_load(driver, local_url):
+    driver.get(local_url)
+    assert wait_until(driver, 30, By.ID, 'var1-info').is_displayed(), 'First table not show!'
+
+
+def test_table2_load(driver, local_url):
+    driver.get(local_url)
+    assert wait_until(driver, 30, By.ID, 'var2-info').is_displayed(), 'Second table not show!'
+
+
+def wait_until(driver, timeout, by, locator):
+    element_visible = EC.visibility_of_element_located((by, locator))
+    return WebDriverWait(driver, timeout).until(element_visible)
+
+
