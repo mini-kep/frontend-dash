@@ -5,7 +5,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 def test_page_load(driver, local_url):
     driver.get(local_url)
-    assert driver.find_element_by_id('frequency').is_displayed(), 'Frequency not show!'
+    assert wait_until(driver, 30, By.ID, 'frequency').is_displayed(), 'Frequency not show!'
 
 
 def test_header_page(driver, local_url):
@@ -16,7 +16,7 @@ def test_header_page(driver, local_url):
 
 def test_graph_load(driver, local_url):
     driver.get(local_url)
-    assert driver.find_element_by_id('time-series-graph').is_displayed(), 'Graph not show!'
+    assert wait_until(driver, 30, By.ID, 'time-series-graph').is_displayed(), 'Graph not show!'
 
 
 def test_table1_load(driver, local_url):
