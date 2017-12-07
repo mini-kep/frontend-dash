@@ -1,154 +1,129 @@
-"""Access functions/classes for: 
+import requests
+import pandas as pd
 
-    - api/freq: get_freq() 
-    - api/names/{freq}: get_names(freq) 
-    - api/info/?name={name}: VarInfo
-    - api/datapoints: DatapointsCSV, DatapointsJSON 
-    - api/frame: Frame
-    - custom API: CustomAPI
-    
+"""
+- api/freq
+- api/names
+- api/info
+- api/datapoints
+- api/frame
+- custom api
 """
 
-#TODO:
-#  1. google-style <https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments>
-#     docstrings for methods/classes above:
-#       a) write most sensistive part of docstring - something less clear
-#       b) rest fo docstrings          
-#  2. make unitttests
-#       a) extend asserts in __main__ section       
-#       b) convert to unittests
+BASE_URL = 'http://minikep-db.herokuapp.com/'
 
 
-import requests
-from urllib.parse import urlencode, urlunparse, ParseResult
-
-BASE_URL = 'minikep-db.herokuapp.com'
-   
-def make_url(endpoint: str, param_dict: dict = {}, base=BASE_URL):
-    param_str = urlencode(param_dict)
-    pr = ParseResult(scheme='http', 
-                    netloc=base, 
-                    path=endpoint, 
-                    params=None,  
-                    query=param_str, 
-                    fragment=None)
-    return urlunparse(pr)    
-
-   
 def fetch_json(url):
-    data = requests.get(url).json()
-    # if parameters are invalid, response is not a list
-    # if not isinstance(data, list):
-    #    return []
-    return data
-
-
-def get(endpoint, param_dict={}):
-    url = make_url(endpoint, param_dict)
-    data = fetch_json(url)
-    if not isinstance(data, list):
-        return []
-    return data
+    return requests.get(url).json()
 
 
 def get_freq():
-    return get('api/freq')
+    url = BASE_URL + 'api/freq'
+    return fetch_json(url)
 
 
 def get_names(freq):
-    endpoint = 'api/names/{}'.format(freq)
-    return get(endpoint)
+    url =  BASE_URL + 'api/names/{}'.format(freq)
+    return fetch_json(url)
+
+# TODO: must simplify this callto 'api/info?name={}', make freq optional
+
+def get_info(freq, name):
+    url =  BASE_URL + 'api/info?freq={}&name={}'.format(freq, name)
+    return fetch_json(url)
 
 
-class ParameterBase(object):
-    endpoint = ''
-
-    def __init__(self, **kwargs):
-        self.param_dict = kwargs
-
-    @property
-    def url(self):
-        return make_url(self.endpoint, self.param_dict)
-
-    def json(self):
-        data = requests.get(self.url).json()
-        # if parameters are invalid, response is not a list
-        if not isinstance(data, list):
-            return []
-        return data
-
-    def text(self):
-        return requests.get(self.url).text
+def make_url(freq, name, format, start_date=None, end_date=None):
+    url = BASE_URL + 'api/datapoints'
+    url += '?name={}&freq={}&format={}'.format(name, freq, format)
+    if start_date:
+        url += '&start_date={}'.format(start_date)
+    if end_date:
+        url += '&end_date={}'.format(end_date)
+    return url
 
 
-class DatapointsJSON(ParameterBase):
-    endpoint = 'api/datapoints'
-
-    def __init__(self, freq, name):
-        super().__init__(freq = freq, name = name, format = 'json')
+def get_datapoints_json(freq, name, start_date=None, end_date=None):
+    url = make_url(freq, name, 'json', start_date, end_date)
+    return fetch_json(url)
 
 
-class DatapointsCSV(ParameterBase):
-    endpoint = 'api/datapoints'
-
-    def __init__(self, freq, name):
-        super().__init__(freq = freq, name = name, format = 'csv')
+def get_ts(freq, name, start_date=None, end_date=None):
+    url = make_url(freq, name, 'csv', start_date=start_date, end_date=end_date)
+    return read_ts_from_url(url)
 
 
-class Frame(ParameterBase):
-    endpoint = 'api/frame'
-    def __init__(self, freq, names):        
-        super().__init__(freq = freq, names = ','.join(names))
+def get_frame(freq):
+    url = BASE_URL + f'api/frame?freq={freq}'
+    return read_df_from_url(url)
 
 
-class VarInfo:
-    def __init__(self, freq, name):
-        self.freq = freq
-        url = make_url('api/info', {'freq': freq, 'name': name})
-        self.info = fetch_json(url)
+# TODO: add finaliser
+def get_custom_series(freq, name, suffix, start, end, domain='ru'):
+    url = BASE_URL + f'{domain}/series/{name}/{freq}/{suffix}/{start}/{end}'
+    return read_ts_from_url(url)
 
-    def __getattr__(self, x):
-        return self.info[self.freq].get(x)
+# pandas series and dataframes 
+
+def read_ts_from_url(url):
+    """Read pandas time series from *source_url*."""
+    return pd.read_csv(url, converters={0: pd.to_datetime}, index_col=0, 
+                       squeeze=True)
+
+def read_df_from_url(url):
+    """Read pandas dataframe from *source_url*."""
+    return pd.read_csv(url, converters={0: pd.to_datetime}, index_col=0)
+
+# supplements for checks
+
+def join_df(df_list):
+    df = df_list[0]
+    for right_df in df_list[1:]:
+        df = df.join(right_df, how='outer')
+    return df
 
 
-class CustomAPI:
-    def __init__(self, freq, name, domain='ru'):
-        self._endpoint = f'{domain}/series/{name}/{freq}'
-
-    @property
-    def endpoint(self):
-        return self._endpoint
-
-    @property
-    def url(self):
-        return make_url(self.endpoint)
-
-    def text(self):
-        return requests.get(self.url).text
+def get_df_by_names(freq, names):
+    df_list = [get_ts(freq, name).to_frame() for name in names]
+    return join_df(df_list)
 
 
-if __name__ == '__main__': 
-    assert make_url('api/print', dict(a=1)) == \
-        'http://minikep-db.herokuapp.com/api/print?a=1'
-    assert make_url('api/print') == 'http://minikep-db.herokuapp.com/api/print'   
+# TODO: this should be equal to get_frame()
+def get_df(freq):
+    names = get_names(freq)
+    return get_df_by_names(freq, names)
 
-    # TODO: add more specific checks
-    assert DatapointsCSV(freq='a', name='GDP_yoy').url
-    assert DatapointsCSV(freq='a', name='GDP_yoy').text()
-    assert DatapointsJSON(freq='a', name='GDP_yoy').url
-    assert DatapointsJSON(freq='a', name='GDP_yoy').json() 
+
+if __name__ == '__main__':
+    # get variable list for frequency 'q' (quarterly)
+    variable_names_quarterly = get_names('q')
+    # read one variable as pd.Series
+    ts = get_ts('q', 'GDP_yoy')
+    # read all variables for frequency 'q' as pd.DataFrame 
+    # runs about 20-40 sec
+    dfq = get_df('q')    
+    # check dataframe columns are exaactly the ones we retrieved earlier
+    assert variable_names_quarterly == dfq.columns.tolist()    
     
-    vi = VarInfo(freq='a', name='GDP_yoy')
-    assert vi.start_date 
-    assert vi.latest_date 
-    assert vi.latest_value 
-    assert CustomAPI(domain='ru', freq='a', name='GDP_yoy').endpoint 
-    assert CustomAPI(domain='ru', freq='a', name='GDP_yoy').url 
-    assert CustomAPI(freq='a', name='GDP_yoy').endpoint 
-    assert CustomAPI(freq='a', name='GDP_yoy').url 
-    assert CustomAPI(freq='a', name='GDP_yoy').text()
-    assert CustomAPI(freq='d', name='BRENT', domain='oil').url 
-    
-    assert CustomAPI(freq='a', name='GDP_yoy').text() == \
-        DatapointsCSV(freq='a', name='GDP_yoy').text()
-                
+#        Index(['CPI_ALCOHOL_rog', 'CPI_FOOD_rog', 'CPI_NONFOOD_rog', 'CPI_rog',
+#               'CPI_SERVICES_rog', 'EXPORT_GOODS_bln_usd', 'GDP_bln_rub', 'GDP_yoy',
+#               'GOV_EXPENSE_ACCUM_CONSOLIDATED_bln_rub',
+#               'GOV_EXPENSE_ACCUM_FEDERAL_bln_rub',
+#               'GOV_EXPENSE_ACCUM_SUBFEDERAL_bln_rub',
+#               'GOV_REVENUE_ACCUM_CONSOLIDATED_bln_rub',
+#               'GOV_REVENUE_ACCUM_FEDERAL_bln_rub',
+#               'GOV_REVENUE_ACCUM_SUBFEDERAL_bln_rub',
+#               'GOV_SURPLUS_ACCUM_FEDERAL_bln_rub',
+#               'GOV_SURPLUS_ACCUM_SUBFEDERAL_bln_rub', 'IMPORT_GOODS_bln_usd',
+#               'INDPRO_rog', 'INDPRO_yoy', 'INVESTMENT_bln_rub', 'INVESTMENT_rog',
+#               'INVESTMENT_yoy', 'RETAIL_SALES_bln_rub', 'RETAIL_SALES_FOOD_bln_rub',
+#               'RETAIL_SALES_FOOD_rog', 'RETAIL_SALES_FOOD_yoy',
+#               'RETAIL_SALES_NONFOOD_bln_rub', 'RETAIL_SALES_NONFOOD_rog',
+#               'RETAIL_SALES_NONFOOD_yoy', 'RETAIL_SALES_rog', 'RETAIL_SALES_yoy',
+#               'TRANSPORT_FREIGHT_bln_tkm', 'UNEMPL_pct', 'WAGE_NOMINAL_rub',
+#               'WAGE_REAL_rog', 'WAGE_REAL_yoy'],
+#              dtype='object')
+
+    # can also get monthly data
+    # commented because it slows down code, uncomment if you need monthly data
+    # dfm = get_df('m')    

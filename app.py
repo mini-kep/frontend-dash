@@ -43,20 +43,20 @@ from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
 
-import access
+import minikep
 
 # Setup from <https://github.com/plotly/dash-heroku-template>
-# > the template is configured to execute 'server' on 'app.py'
+# "... the template is configured to execute 'server' on 'app.py'... "
 server = flask.Flask(__name__)
 server.secret_key = os.environ.get('secret_key', str(randint(0, 1000000)))
 app = dash.Dash(__name__, server=server)
 
 # app properties
 app.css.append_css({"external_url": "https://codepen.io/anon/pen/LONErz.css"})
-app.title = 'Macro dataset browser'
+app.title = 'MiniKEP data browser'
 
 
-NAMES = {freq: access.get_names(freq) for freq in 'aqmd'}
+NAMES = {freq: minikep.names(freq) for freq in 'aqmd'}
 
 
 class WidgetItems:
@@ -79,7 +79,7 @@ class DataSeries:
     def __init__(self, freq, name):
         self.freq = freq
         self.name = name
-        self.data = access.DatapointsJSON(freq, name).json()
+        self.data = minikep.datapoints(freq, name)
 
     @staticmethod
     def get_year(datapoint):
@@ -184,10 +184,6 @@ app.layout =  html.Div([
     
 # callbacks    
     
-
-#
-#        information block 
-#
 #        Variable         BRENT
 #        Frequency:       d
 #        Start:           1987-05-20
@@ -206,12 +202,11 @@ def make_html_table(table_elements):
 # FIXME: freq repeated in two tables
 
 def short_link(freq, name):
-    cu = access.CustomAPI(freq, name)
-    text = cu.endpoint
-    return html.A(text, href=cu.url)
+    cu = minikep.CustomAPI(freq, name)
+    return html.A(cu.endpoint, href=cu.url)
 
 def varinfo(freq, name):
-    vi = access.VarInfo(freq, name)
+    vi = minikep.VarInfo(freq, name)
     table_elements = [
         (html.B('Variable'), html.B(name)),
         ('Description', 'reserved'),
@@ -307,8 +302,8 @@ def update_graph_parameters(freq, name1, name2, years):
 
 def download_data_html(freq, names, years):
     link_text = 'Download data in CSV format'
-    url = access.Frame(freq, names).url
-    # FIXME: bring back years
+    # FIXME: use years in link
+    url = minikep.get_frame_url(freq, names)
     return html.A(link_text, href=url)
 
 
@@ -320,12 +315,7 @@ def download_data_html(freq, names, years):
                       ])
 def update_link_parameters(freq, name1, name2, years):
     link1 = None
-    # FIXME: must simplify
-    # (names,) = [','.join((name1, name2)) if name1 and name2 else name1 or name2]
-    names = []
-    for name in (name1, name2):
-        if name: 
-            names.append(name)
+    names = [name for name in (name1, name2) if name] 
     if freq and names:
         link1 = download_data_html(freq, names, years)
     return [link1]
@@ -338,7 +328,6 @@ def update_link_parameters(freq, name1, name2, years):
 #  - graph with time series
 #  - slider for timerange
 #  - links to download data
-
 
 
 if __name__ == '__main__':
